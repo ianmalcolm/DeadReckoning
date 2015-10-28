@@ -10,6 +10,8 @@ import org.apache.commons.math3.util.FastMath;
 import org.geotools.referencing.GeodeticCalculator;
 import org.mapsforge.core.model.LatLong;
 
+import com.graphhopper.util.GPXEntry;
+
 public class GeoPosition {
 
 	// private final LatLong latlong;
@@ -29,7 +31,7 @@ public class GeoPosition {
 		this(_lat, _lon, _ele, _time.getTime());
 
 	}
-
+	
 	public GeoPosition(LatLong _latlong, long _time) {
 		this(_latlong.latitude, _latlong.longitude, 0, _time);
 	}
@@ -40,19 +42,25 @@ public class GeoPosition {
 
 		double diff = (double) (v.time.getTime() - time.getTime()) / 1000;
 
+		// System.out.println(FastMath.toDegrees(v.getAzimuth())+"\t"+v.getHorizontalSpeed());
+
+		Velocity newv = new Velocity(
+				new Vector3D(v.getY(), v.getX(), v.getZ()), v.time.getTime());
 		// reference:
 		// http://stackoverflow.com/questions/3917340/geotools-how-to-do-dead-reckoning-and-course-calculations-using-geotools-class
 
 		GeodeticCalculator calc = new GeodeticCalculator();
 		// It's odd! setStartingGeographicPoint accept longitude first
 		calc.setStartingGeographicPoint(lon, lat);
-		calc.setDirection(FastMath.toDegrees(Math.PI / 2 - v.getAzimuth()),
-				v.getHorizontalSpeed() * diff);
+		// calc.setDirection(FastMath.toDegrees(Math.PI / 2 - v.getAzimuth()),
+		// v.getHorizontalSpeed() * diff);
+		calc.setDirection(FastMath.toDegrees(newv.getAlpha()),
+				newv.getHorizontalSpeed() * diff);
 		Point2D p = calc.getDestinationGeographicPoint();
 		// It's odd! getDestinationGeographicPoint returns longitude first
-		double newelevation = ele + v.getVerticalSpeed() * diff;
+		double newelevation = ele + newv.getVerticalSpeed() * diff;
 
-		return new GeoPosition(p.getY(), p.getX(), 0, v.time.getTime());
+		return new GeoPosition(p.getY(), p.getX(), 0, newv.time.getTime());
 	}
 
 	public static Vector3D distance(GeoPosition p, GeoPosition q) {
@@ -69,6 +77,10 @@ public class GeoPosition {
 
 		// in meters
 		return trip;
+	}
+
+	public GPXEntry toGPXEntry() {
+		return new GPXEntry(lat, lon, ele, time.getTime());
 	}
 
 }

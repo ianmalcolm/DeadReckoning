@@ -16,16 +16,19 @@ import com.astar.i2r.ins.data.MotionData;
 import com.astar.i2r.ins.motion.Accelerate;
 import com.astar.i2r.ins.motion.Attitude;
 import com.astar.i2r.ins.motion.GeoPosition;
+import com.astar.i2r.ins.motion.MagneticField;
 import com.astar.i2r.ins.motion.Velocity;
 
 public class AccumulatedMotion extends ArrayList<GeoPosition> {
 
-	private static final Logger log = Logger.getLogger(AccumulatedMotion.class.getName());
+	private static final Logger log = Logger.getLogger(AccumulatedMotion.class
+			.getName());
 
 	private Attitude attitude = null;
 	private Accelerate accelerate = null;
 	private Velocity velocity = null;
 	private Double speedkmh = Double.NaN;
+	private MagneticField magnet = null;
 
 	public void increment(Data data) {
 
@@ -42,7 +45,8 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 			if (size() < 1) {
 				// initialize position
 				double[] p = ((GPSData) data).gps;
-				GeoPosition pos = new GeoPosition(new LatLong(p[0], p[1]), data.time);
+				GeoPosition pos = new GeoPosition(new LatLong(p[0], p[1]),
+						data.time);
 				add(pos);
 			}
 		}
@@ -53,8 +57,13 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 					attitude.time.getTime());
 		}
 
+		if (magnet == null && data instanceof MagneticData) {
+			MagneticData mData = ((MagneticData) data);
+			magnet = new MagneticField(mData.magnetic, mData.time);
+		}
+
 		if (attitude != null && accelerate != null && velocity != null
-				&& size() > 0) {
+				&& size() > 0 && magnet != null) {
 			if (data instanceof MotionData) {
 				increment((MotionData) data);
 			} else if (data instanceof GPSData) {
@@ -69,8 +78,30 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 
 	private void increment(MotionData data) {
 
+		// calculate the z angle with respect to north
+		double heading = 0.0;
+
+		{
+			double x = magnet.getX();
+			double y = magnet.getY();
+			double z = magnet.getZ();
+
+			if (y > 0)
+				heading = 90.0 - Math.atan(x / y) * 180.0 / Math.PI;
+			if (y < 0)
+				heading = 270.0 - Math.atan(x / y) * 180.0 / Math.PI;
+			if (y == 0 && x < 0)
+				heading = 180.0;
+			if (y == 0 && x > 0)
+				heading = 0.0;
+		}
+
 		// update attitude
-		attitude = new Attitude(data.cardan, data.time);
+		double[] combinedCardan = { data.cardan[0], data.cardan[1],
+				FastMath.toRadians(heading) };
+
+		 attitude = new Attitude(data.cardan, data.time);
+//		attitude = new Attitude(combinedCardan, data.time);
 
 		// double roll = FastMath.toDegrees(data.cardan[0]);
 		// double pitch = FastMath.toDegrees(data.cardan[1]);
@@ -108,10 +139,29 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 		// velocity.calibrate(data.speedkmh / 3.6);
 		// }
 		// }
+		
+		double heading = 0.0;
+
+		{
+			double x = magnet.getX();
+			double y = magnet.getY();
+			double z = magnet.getZ();
+
+			if (y > 0)
+				heading = 90.0 - Math.atan(x / y) * 180.0 / Math.PI;
+			if (y < 0)
+				heading = 270.0 - Math.atan(x / y) * 180.0 / Math.PI;
+			if (y == 0 && x < 0)
+				heading = 180.0;
+			if (y == 0 && x > 0)
+				heading = 0.0;
+		}
+		
+		System.out.println(heading);
 	}
 
 	private void increment(MagneticData data) {
-
+		magnet = new MagneticField(data.magnetic, data.time);
 	}
 
 	public String currentPosition() {
