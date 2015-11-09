@@ -16,13 +16,13 @@ import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.data.GPSData;
 import com.astar.i2r.ins.data.Reader;
 import com.astar.i2r.ins.localization.AccumulatedMotion;
-import com.astar.i2r.ins.localization.Localization;
-import com.astar.i2r.ins.motion.GeoPosition;
+import com.astar.i2r.ins.localization.GUILocalization;
+import com.astar.i2r.ins.motion.GeoPoint;
 
-public class LocalizationWorker extends SwingWorker<List<GeoPosition>, Void> {
+public class LocalizationWorker extends SwingWorker<List<GeoPoint>, Void> {
 
 	private File imuFile = null;
-	private List<GeoPosition> track = null;
+	private List<GeoPoint> track = null;
 	private MapView mapView = null;
 	private static String osmFile = "/home/ian/Documents/map/malaysia-singapore-brunei-latest.osm.pbf";
 
@@ -34,10 +34,10 @@ public class LocalizationWorker extends SwingWorker<List<GeoPosition>, Void> {
 	}
 
 	@Override
-	protected List<GeoPosition> doInBackground() throws Exception {
+	protected List<GeoPoint> doInBackground() throws Exception {
 		// TODO Auto-generated method stub
 		Reader reader = new Reader(imuFile);
-		Localization local = new Localization(osmFile, "graphFolder");
+		GUILocalization local = new GUILocalization(osmFile, "graphFolder");
 		for (Data data : reader) {
 			local.increment(data);
 		}
@@ -70,7 +70,7 @@ public class LocalizationWorker extends SwingWorker<List<GeoPosition>, Void> {
 
 	}
 	
-	private Polyline loadTrack(List<GeoPosition> list) {
+	private Polyline loadTrack(List<GeoPoint> list) {
 		Polyline pl = new Polyline(MainFrame.CALPAINT,
 				MainFrame.GRAPHIC_FACTORY, true);
 		List<LatLong> coordinateList = pl.getLatLongs();

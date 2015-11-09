@@ -65,7 +65,7 @@ import org.opencv.highgui.VideoCapture;
 import com.astar.i2r.ins.INS;
 import com.astar.i2r.ins.data.GPSData;
 import com.astar.i2r.ins.localization.AccumulatedMotion;
-import com.astar.i2r.ins.motion.GeoPosition;
+import com.astar.i2r.ins.motion.GeoPoint;
 
 import java.awt.Component;
 
@@ -121,7 +121,7 @@ public class MainFrame extends JFrame implements ActionListener, ChangeListener 
 
 	List<GPSData> groundTruth = null;
 	AccumulatedMotion estimatedTrack = null;
-	List<GeoPosition> calibratedTrack = null;
+	List<GeoPoint> calibratedTrack = null;
 	FixedPixelCircle groundTruthMarker = null;
 	FixedPixelCircle estimatedTrackMarker = null;
 

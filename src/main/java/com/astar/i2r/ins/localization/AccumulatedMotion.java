@@ -15,11 +15,11 @@ import com.astar.i2r.ins.data.MagneticData;
 import com.astar.i2r.ins.data.MotionData;
 import com.astar.i2r.ins.motion.Accelerate;
 import com.astar.i2r.ins.motion.Attitude;
-import com.astar.i2r.ins.motion.GeoPosition;
+import com.astar.i2r.ins.motion.GeoPoint;
 import com.astar.i2r.ins.motion.MagneticField;
 import com.astar.i2r.ins.motion.Velocity;
 
-public class AccumulatedMotion extends ArrayList<GeoPosition> {
+public class AccumulatedMotion extends ArrayList<GeoPoint> {
 
 	private static final Logger log = Logger.getLogger(AccumulatedMotion.class
 			.getName());
@@ -45,7 +45,7 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 			if (size() < 1) {
 				// initialize position
 				double[] p = ((GPSData) data).gps;
-				GeoPosition pos = new GeoPosition(new LatLong(p[0], p[1]),
+				GeoPoint pos = new GeoPoint(new LatLong(p[0], p[1]),
 						data.time);
 				add(pos);
 			}
@@ -124,7 +124,7 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 		// + "\tapproxV:\t" + approxVel.toString());
 
 		// update position
-		GeoPosition newPosition = get(size() - 1).increment(approxVel);
+		GeoPoint newPosition = get(size() - 1).increment(approxVel);
 		// Position newPosition = get(size() - 1).increment(velocity);
 
 		add(newPosition);
@@ -169,7 +169,7 @@ public class AccumulatedMotion extends ArrayList<GeoPosition> {
 			return "Position not defined!";
 		} else {
 			String t = get(size() - 1).time.toString();
-			GeoPosition lastPosition = get(size() - 1);
+			GeoPoint lastPosition = get(size() - 1);
 			LatLong curPos = new LatLong(lastPosition.lat, lastPosition.lon);
 			return t + "\t" + curPos.toString();
 		}

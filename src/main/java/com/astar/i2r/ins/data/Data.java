@@ -1,9 +1,11 @@
 package com.astar.i2r.ins.data;
 
-public class Data {
+public abstract class Data {
 
 	public static final String NAMETAG = "sensorType";
 	public static final String TIMETAG = "relatedTime";
+	// public static final Pattern timePattern = Pattern
+	// .compile("^\\p{Upper}[3]:(.+?),");
 
 	public final Long time;
 
@@ -12,9 +14,9 @@ public class Data {
 	 * @param in
 	 *            epoch time in seconds
 	 */
-	public Data(double in) {
+	public Data(long in) {
 		// TODO Auto-generated constructor stub
-		time = (new Double(in * 1000)).longValue();
+		time = in;
 	}
 
 	/**
@@ -22,9 +24,9 @@ public class Data {
 	 * @param in
 	 *            epoch time in seconds
 	 */
+
 	public Data(String in) {
-		// TODO Auto-generated constructor stub
-		this(Double.parseDouble(in));
+		this(Long.parseLong(in));
 	}
 
 }

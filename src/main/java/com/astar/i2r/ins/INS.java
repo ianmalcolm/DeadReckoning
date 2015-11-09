@@ -1,6 +1,9 @@
 package com.astar.i2r.ins;
 
-import java.awt.EventQueue;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,7 +17,12 @@ import org.apache.commons.cli.ParseException;
 import org.mapsforge.map.reader.ReadBuffer;
 import org.opencv.core.Core;
 
+import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.gui.MainFrame;
+import com.astar.i2r.ins.localization.Context;
+import com.astar.i2r.ins.localization.Localization;
+import com.astar.i2r.ins.map.MapWrapper;
+import com.astar.i2r.ins.map.GeoMap;
 
 /**
  * Hello world!
@@ -23,6 +31,15 @@ import com.astar.i2r.ins.gui.MainFrame;
 public class INS {
 
 	private static final Logger log = Logger.getLogger(INS.class.getName());
+
+	public static final int car0 = 0;
+	
+	// data queue
+	private BlockingQueue<Data> dataQ = null;
+	private Thread dSvr = null;
+	private Thread rSvr = null;
+	private Thread lSvr = null;
+	private Map<Integer, Context> cList = null;
 
 	/**
 	 * Starts the {@code MapViewer}.
@@ -69,12 +86,27 @@ public class INS {
 			help(options);
 		}
 
-		EventQueue.invokeLater(new MyWindow(mapFiles, vdoFile, imuFile));
-
 	}
 
-	private INS() {
-		throw new IllegalStateException();
+	public INS() {
+
+		cList = new HashMap<Integer, Context>();
+		dataQ = new LinkedBlockingQueue<Data>();
+
+		GeoMap map = new MapWrapper();
+
+		// Create TCP data server and request server
+		dSvr = new DataServer(dataQ);
+		rSvr = new RequestServer(cList, map);
+
+		// Create server side localization worker
+		lSvr = new Localization(dataQ, cList, map);
+
+		// create server side GUI
+
+		dSvr.start();
+		rSvr.start();
+		lSvr.start();
 	}
 
 	private static void help(Options options) {

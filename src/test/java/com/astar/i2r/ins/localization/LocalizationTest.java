@@ -18,7 +18,7 @@ public class LocalizationTest {
 				"/home/ian/Documents/ins/20151015/1444893421.386011.xml");
 		
 		Reader reader = new Reader(file);
-		Localization track = new Localization(osmFile, graphFolder);
+		GUILocalization track = new GUILocalization(osmFile, graphFolder);
 		for (Data data : reader) {
 			track.increment(data);
 		}

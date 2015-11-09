@@ -40,7 +40,10 @@ public class Attitude extends Rotation {
 	 */
 	public Attitude(double[] in, long _time) {
 		this(in[1], in[0], in[2], _time);
+	}
 
+	public Attitude(double[] in, double calib, long _time) {
+		this(in[1], in[0], in[2] + calib, _time);
 	}
 
 	public Attitude(double roll, double pitch, double yaw, long _time) {
@@ -96,13 +99,13 @@ public class Attitude extends Rotation {
 		return attVector.scalarMultiply(in);
 	}
 
-//	public Attitude calibrate(Rotation r) {
-//		Rotation calRot = applyTo(r);
-//		Attitude newAtt = new Attitude(calRot.getQ0(), calRot.getQ1(),
-//				calRot.getQ2(), calRot.getQ3(), time.getTime());
-//		// return this;
-//		return newAtt;
-//	}
+	// public Attitude calibrate(Rotation r) {
+	// Rotation calRot = applyTo(r);
+	// Attitude newAtt = new Attitude(calRot.getQ0(), calRot.getQ1(),
+	// calRot.getQ2(), calRot.getQ3(), time.getTime());
+	// // return this;
+	// return newAtt;
+	// }
 
 	// /**
 	// * Update the current attitude with a relative Cardan angles, e.g. relate

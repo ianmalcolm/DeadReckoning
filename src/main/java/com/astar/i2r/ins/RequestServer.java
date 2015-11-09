@@ -1,80 +1,128 @@
 package com.astar.i2r.ins;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.logging.Logger;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 
-import com.astar.i2r.ins.motion.GeoPosition;
+import com.astar.i2r.ins.localization.Context;
+import com.astar.i2r.ins.map.CarParkDB;
+import com.astar.i2r.ins.map.GeoMap;
+import com.astar.i2r.ins.motion.GeoPoint;
+import com.google.code.geocoder.Geocoder;
+import com.google.code.geocoder.GeocoderRequestBuilder;
+import com.google.code.geocoder.model.GeocodeResponse;
+import com.google.code.geocoder.model.GeocoderRequest;
+import com.google.code.geocoder.model.GeocoderResult;
+import com.google.code.geocoder.model.LatLng;
 
 public class RequestServer extends Thread {
 	private static final Logger log = Logger.getLogger(RequestServer.class
 			.getName());
 
 	public static final String RQTGPS = "RQTGPS";
-	public static final String RQTMAP = "RQTGPS";
-	public static final String RQTLOC = "RQTGPS";
+	public static final String RQTMAP = "RQTMAP";
+	public static final String RQTMAPNAME = "RQTMAPNAME";
+	public static final String RQTLOC = "RQTLOC";
 
+	private GeoMap map = null;
+	private Map<Integer, Context> cList = null;
 	private ServerSocket rSockSvr = null;
 	public static final int PORT = 2001;
 
-	private String loc = "Clementi Ave 2";
-	private GeoPosition gps = new GeoPosition(1.315123, 103.771873, 0, 0);
+	private static final Geocoder geocoder = new Geocoder();
 
-	public RequestServer() {
+	public RequestServer(Map<Integer, Context> _cList, GeoMap _map) {
 
+		map = _map;
+		cList = _cList;
 		try {
 			rSockSvr = new ServerSocket(PORT);
 		} catch (IOException e) {
 			e.printStackTrace();
-			log.severe("Cannot open server port " + PORT);
+			log.fatal("Cannot open server port " + PORT);
 		}
 	}
 
 	@Override
 	public void run() {
-		String cmd = "";
+		String cmd = null;
 		while (true) {
 			Socket rSock = null;
 			try {
 				rSock = rSockSvr.accept();
-				log.fine("Link established.");
-				cmd = IOUtils.toString(rSock.getInputStream());
-				log.info("Received: " + cmd);
+				log.trace("Link established.");
+				// cmd = IOUtils.toString(rSock.getInputStream());
+				DataOutputStream dos = new DataOutputStream(
+						rSock.getOutputStream());
+				BufferedReader br = new BufferedReader(new InputStreamReader(
+						new DataInputStream(rSock.getInputStream())));
 
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+				cmd = br.readLine();
+				if (cmd == null) {
+					break;
+				}
 
-			byte[] reply = null;
+				Context car = cList.get(INS.car0);
 
-			if (cmd.contains(RQTGPS)) {
-				reply = gps.toString().getBytes();
-			} else if (cmd.contains(RQTMAP)) {
-				reply = "MAP".getBytes();
-			} else if (cmd.contains(RQTLOC)) {
-				reply = loc.getBytes();
-			} else {
-				reply = "Invalid request!".getBytes();
-				log.info("Received invalid request from client.");
-			}
+				log.trace("Received: " + cmd);
+				if (cmd.contains(RQTGPS)) {
+					GeoPoint curPos = car.getGPS();
+					if (curPos == null) {
+						IOUtils.write("GPS coordinates Unknow.\n", dos);
+					} else {
+						IOUtils.write(car.getGPS().toString() + '\n', dos);
+					}
+				} else if (cmd.contains(RQTMAPNAME)) {
+					String[] cmds = cmd.split(",");
+					if (cmds.length > 3) {
+						String mname = CarParkDB.getMap(cmds[1], cmds[2],
+								cmds[3]);
+						IOUtils.write(mname + '\n', dos);
+					}
+				} else if (cmd.contains(RQTMAP)) {
+					String[] cmds = cmd.split(",");
+					if (cmds.length > 1) {
+						FileInputStream fis = new FileInputStream(cmds[1]);
+						int bytes = IOUtils.copy(fis, dos);
+						fis.close();
+						System.out.println("Server sent file size: " + bytes);
+					}
+				} else if (cmd.contains(RQTLOC)) {
+					String[] cmds = cmd.split(",");
+					if (cmds.length > 2) {
+						GeoPoint curPos = new GeoPoint(
+								Double.parseDouble(cmds[1]),
+								Double.parseDouble(cmds[2]), 0, 0);
+						LatLng p = new LatLng(Double.toString(curPos.lat),
+								Double.toString(curPos.lon));
+						GeocoderRequest geocoderRequest = new GeocoderRequestBuilder()
+								.setLocation(p).setLanguage("en")
+								.getGeocoderRequest();
+						GeocodeResponse geocoderResponse = geocoder
+								.geocode(geocoderRequest);
+						GeocoderResult result = geocoderResponse.getResults()
+								.get(0);
 
-			DataOutputStream dos;
-
-			try {
-				dos = new DataOutputStream(rSock.getOutputStream());
-				dos.write(reply);
-				log.fine("Sent msg to client: " + reply.toString());
+						IOUtils.write(result.getFormattedAddress() + '\n', dos);
+					}
+				} else {
+					String invalid = "Invalid request!";
+					IOUtils.write(invalid + '\n', dos);
+					log.debug("Received invalid request from client.");
+				}
 				dos.flush();
-				rSock.close();
+				dos.close();
+				br.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

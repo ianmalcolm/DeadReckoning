@@ -1,9 +1,13 @@
 package com.astar.i2r.ins.motion;
 
+import java.awt.geom.Point2D;
+
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.util.FastMath;
+import org.geotools.referencing.GeodeticCalculator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 //<data relatedTime="518915.564" sensorType="GPS">
@@ -37,6 +41,7 @@ import org.junit.Test;
 
 public class AttitudeTest {
 
+	@Ignore
 	@Test
 	public void test() {
 		// double[] cardanx90 = { 3.1415926 / 2, 0, 0 };
@@ -62,15 +67,56 @@ public class AttitudeTest {
 		// System.out.println(worldVel.scalarMultiply(10).toString());
 
 		//
-//		Attitude att = new Attitude(cardan, 100);
-//		Rotation calib = new Rotation(RotationOrder.ZXZ, 0, 0, Math.PI/2);
-//		Rotation zerocalib = new Rotation(RotationOrder.ZXZ, 0, 0, 0);
-//		Attitude newatt = att.calibrate(calib);
-//		Attitude zeroatt = att.calibrate(zerocalib);
-//		System.out.println(att.toString());
-//		System.out.println(zeroatt.toString());
-//		System.out.println(newatt.toString());
+		// Attitude att = new Attitude(cardan, 100);
+		// Rotation calib = new Rotation(RotationOrder.ZXZ, 0, 0, Math.PI/2);
+		// Rotation zerocalib = new Rotation(RotationOrder.ZXZ, 0, 0, 0);
+		// Attitude newatt = att.calibrate(calib);
+		// Attitude zeroatt = att.calibrate(zerocalib);
+		// System.out.println(att.toString());
+		// System.out.println(zeroatt.toString());
+		// System.out.println(newatt.toString());
+
+		GeoPoint p = new GeoPoint(1.298167, 103.788173, 0, 0);
+		// GeoPosition q = new GeoPosition(1.300103, 103.790265, 0, 0);
+		// GeoPosition r = new GeoPosition(1.299014, 103.790849, 0, 0);
+
+		GeoPoint s = new GeoPoint(1.298167, 103.790265, 0, 0);
+		GeoPoint t = new GeoPoint(1.300103, 103.788173, 0, 0);
+
+		Vector3D u = new Vector3D(1, 0, 0);
+		Vector3D v = new Vector3D(0, 1, 0);
+
+		System.out.println(u.getAlpha() + "\t" + v.getAlpha());
+		System.out.println(GeoPoint.distance(p, s).getAlpha() + "\t"
+				+ GeoPoint.distance(p, t).getAlpha());
+
+		GeodeticCalculator calc = new GeodeticCalculator();
+
+		calc.setStartingGeographicPoint(103.788173, 1.298167);
+		calc.setDirection(90, 100);
+
+		Point2D dest = calc.getDestinationGeographicPoint();
+
+		System.out.println(dest.toString());
 
 	}
 
+	@Test
+	public void attitudetest() {
+		// double[] cardan = { -1.579483, -0.005706, -3.056576 };
+		// Attitude attitude = new Attitude(cardan, -0.6289496183304188, 0);
+		double[] cardan = { -1.579483, 0, -3.056576 };
+		Attitude attitude = new Attitude(cardan, 0, 0);
+		Vector3D vel = attitude.getVelocity(0.44);
+		System.out.println(vel.toString());
+		// Velocity approxVel = new Velocity(vel, data.time);
+
+		GeoPoint p = new GeoPoint(1.297446, 103.789893, 0, 0);
+		GeoPoint q = new GeoPoint(1.298639, 103.787110, 0, 0);
+		Vector3D v = GeoPoint.distance(p, q);
+
+		System.out.println(v.getAlpha() + Math.PI / 2);
+
+	}
+	
 }

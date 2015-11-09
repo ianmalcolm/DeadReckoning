@@ -11,12 +11,17 @@ import com.graphhopper.util.GPXEntry;
 
 public class Step extends Vector3D {
 
-	public static final double MINSTEP = 2;
+	public static final double MINSTEP = 5;
 
 	Date time = new Date();
 
 	public Step(double[] in, long _time) {
 		super(in);
+		time.setTime(_time);
+	}
+
+	public Step(Vector3D in, long _time) {
+		super(in.toArray());
 		time.setTime(_time);
 	}
 
@@ -31,20 +36,20 @@ public class Step extends Vector3D {
 
 	public Step increment(Velocity v) {
 		double diff = (v.time.getTime() - time.getTime()) / 1000.0;
-		return new Step(add(v.scalarMultiply(diff)).toArray(), v.time.getTime());
+		return new Step(add(v.scalarMultiply(diff/3.6)), v.time.getTime());
 	}
-	
+
 	public GPXEntry getDestinationFrom(GPXEntry v) {
 
-//		assert time.after(v.time);
+		// assert time.after(v.time);
 
 		double x = getX();
 		double y = getY();
 		double z = getZ();
-		Vector3D mirror = new Vector3D(y,x,z);
-		
-//		Velocity newv = new Velocity(
-//				new Vector3D(v.getY(), v.getX(), v.getZ()), v.time.getTime());
+		Vector3D mirror = new Vector3D(y, x, z);
+
+		// Velocity newv = new Velocity(
+		// new Vector3D(v.getY(), v.getX(), v.getZ()), v.time.getTime());
 		// reference:
 		// http://stackoverflow.com/questions/3917340/geotools-how-to-do-dead-reckoning-and-course-calculations-using-geotools-class
 
@@ -53,8 +58,7 @@ public class Step extends Vector3D {
 		calc.setStartingGeographicPoint(v.lon, v.lat);
 		// calc.setDirection(FastMath.toDegrees(Math.PI / 2 - v.getAzimuth()),
 		// v.getHorizontalSpeed() * diff);
-		calc.setDirection(FastMath.toDegrees(mirror.getAlpha()),
-				getNorm());
+		calc.setDirection(FastMath.toDegrees(mirror.getAlpha()), getNorm());
 		Point2D p = calc.getDestinationGeographicPoint();
 		// It's odd! getDestinationGeographicPoint returns longitude first
 

@@ -20,12 +20,6 @@ public class Velocity extends Vector3D {
 		time.setTime(_time);
 	}
 
-	// public void set(double[] in, long _time) throws
-	// DimensionMismatchException {
-	// v = new Vector3D(in);
-	// time.setTime(_time);
-	// }
-
 	public Velocity increment(Accelerate acc) {
 		assert acc.time.after(time);
 		double diff = (double) (acc.time.getTime() - time.getTime()) / 1000.0;
