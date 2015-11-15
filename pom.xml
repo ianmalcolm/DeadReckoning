@@ -120,6 +120,11 @@
 			<artifactId>gt-referencing</artifactId>
 			<version>14.0</version>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.geotools</groupId> -->
+<!-- 			<artifactId>gt-geometry</artifactId> -->
+<!-- 			<version>14.0</version> -->
+<!-- 		</dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
@@ -161,7 +166,11 @@
 			<artifactId>geocoder-java</artifactId>
 			<version>0.16</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-core</artifactId>
+			<version>0.9.1</version>
+		</dependency>
 	</dependencies>
 
 

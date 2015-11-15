@@ -32,6 +32,7 @@ public class RequestServer extends Thread {
 	public static final String RQTGPS = "RQTGPS";
 	public static final String RQTMAP = "RQTMAP";
 	public static final String RQTMAPNAME = "RQTMAPNAME";
+	public static final String RQTMAPPRMT = "RQTMAPPRMT";
 	public static final String RQTLOC = "RQTLOC";
 
 	private GeoMap map = null;
@@ -84,10 +85,31 @@ public class RequestServer extends Thread {
 					}
 				} else if (cmd.contains(RQTMAPNAME)) {
 					String[] cmds = cmd.split(",");
+					String mname = null;
 					if (cmds.length > 3) {
-						String mname = CarParkDB.getMap(cmds[1], cmds[2],
-								cmds[3]);
-						IOUtils.write(mname + '\n', dos);
+						mname = CarParkDB.getMap(Double.parseDouble(cmds[1]),
+								Double.parseDouble(cmds[2]),
+								Double.parseDouble(cmds[3]));
+					} else {
+						GeoPoint gps = car.getGPS();
+						double relativeAltitude = car.getRelativeAltitude();
+						if (gps != null && !Double.isNaN(relativeAltitude)) {
+							mname = CarParkDB.getMap(gps.lat, gps.lon,
+									relativeAltitude);
+						}
+					}
+					IOUtils.write(mname + '\n', dos);
+				} else if (cmd.contains(RQTMAPPRMT)) {
+					String[] cmds = cmd.split(",");
+					double[] prmt = null;
+					if (cmds.length > 1) {
+						prmt = CarParkDB.getMapParameter(cmds[1]);
+					}
+					if (prmt != null) {
+						IOUtils.write(prmt[0] + "," + prmt[1] + "," + prmt[2]
+								+ "," + prmt[3] + '\n', dos);
+					} else {
+						IOUtils.write("Unknown Map " + cmds[1] + '\n', dos);
 					}
 				} else if (cmd.contains(RQTMAP)) {
 					String[] cmds = cmd.split(",");
@@ -95,26 +117,38 @@ public class RequestServer extends Thread {
 						FileInputStream fis = new FileInputStream(cmds[1]);
 						int bytes = IOUtils.copy(fis, dos);
 						fis.close();
-						System.out.println("Server sent file size: " + bytes);
+						log.info("Server sent file " + cmds[1] + ", size "
+								+ bytes + " bytes.");
+					} else {
+						GeoPoint gps = car.getGPS();
+						double relativeAltitude = car.getRelativeAltitude();
+						String mname = CarParkDB.getMap(gps.lat, gps.lon,
+								relativeAltitude);
+						dos.writeUTF(mname);
+						FileInputStream fis = new FileInputStream(mname);
+						int bytes = IOUtils.copy(fis, dos);
+						fis.close();
+						log.info("Server sent file " + mname + ", size "
+								+ bytes + " bytes.");
 					}
 				} else if (cmd.contains(RQTLOC)) {
 					String[] cmds = cmd.split(",");
+					String locationName = null;
 					if (cmds.length > 2) {
-						GeoPoint curPos = new GeoPoint(
+						locationName = getLocationName(
 								Double.parseDouble(cmds[1]),
-								Double.parseDouble(cmds[2]), 0, 0);
-						LatLng p = new LatLng(Double.toString(curPos.lat),
-								Double.toString(curPos.lon));
-						GeocoderRequest geocoderRequest = new GeocoderRequestBuilder()
-								.setLocation(p).setLanguage("en")
-								.getGeocoderRequest();
-						GeocodeResponse geocoderResponse = geocoder
-								.geocode(geocoderRequest);
-						GeocoderResult result = geocoderResponse.getResults()
-								.get(0);
-
-						IOUtils.write(result.getFormattedAddress() + '\n', dos);
+								Double.parseDouble(cmds[2]));
+						if (locationName == null) {
+							locationName = "Unknown location!";
+						}
+					} else {
+						GeoPoint gps = car.getGPS();
+						locationName = getLocationName(gps.lat, gps.lon);
+						if (locationName == null) {
+							locationName = "Unknown location!";
+						}
 					}
+					IOUtils.write(locationName + '\n', dos);
 				} else {
 					String invalid = "Invalid request!";
 					IOUtils.write(invalid + '\n', dos);
@@ -129,5 +163,26 @@ public class RequestServer extends Thread {
 			}
 
 		}
+	}
+
+	private String getLocationName(double lat, double lon) {
+
+		LatLng p = new LatLng(Double.toString(lat), Double.toString(lon));
+		GeocoderRequest geocoderRequest = new GeocoderRequestBuilder()
+				.setLocation(p).setLanguage("en").getGeocoderRequest();
+		GeocodeResponse geocoderResponse;
+		try {
+			geocoderResponse = geocoder.geocode(geocoderRequest);
+			GeocoderResult result = geocoderResponse.getResults().get(0);
+
+			return result.getFormattedAddress();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+
 	}
 }

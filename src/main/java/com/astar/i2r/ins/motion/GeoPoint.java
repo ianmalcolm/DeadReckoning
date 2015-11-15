@@ -36,6 +36,10 @@ public class GeoPoint {
 		this(_latlong.latitude, _latlong.longitude, 0, _time);
 	}
 
+	public GeoPoint(double _lat, double _lon, double _ele) {
+		this(_lat, _lon, _ele, 0);
+	}
+
 	public GeoPoint increment(Velocity v) {
 
 		assert v.time.after(time);

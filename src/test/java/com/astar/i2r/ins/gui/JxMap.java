@@ -7,6 +7,9 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -17,6 +20,8 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -100,7 +105,7 @@ public class JxMap extends JFrame implements Runnable {
 		getContentPane().add(jXMapKit);
 		setSize(800, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
+		// setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
 		setVisible(true);
 	}
 
@@ -111,14 +116,15 @@ public class JxMap extends JFrame implements Runnable {
 	}
 
 	public void setAddressLocation(double lat, double lon) {
-		if (jXMapKit.getParent() == this) {
+		if (getContentPane().isAncestorOf(jXMapKit)) {
+//			picLabel.clearMarker();
 			jXMapKit.setAddressLocation(new GeoPosition(lat, lon));
-		} else if (picLabel.getParent() == this) {
-
+		} else if (getContentPane().isAncestorOf(picLabel)) {
+			picLabel.setMarker(lat, lon);
 		}
 	}
 
-	public void dispImage(String file) {
+	public void dispImage(String file, double[] _s, double[] _r) {
 		if (curImageStr == null) {
 			curImageStr = file;
 		} else if (curImageStr.compareTo(file) == 0) {
@@ -132,16 +138,8 @@ public class JxMap extends JFrame implements Runnable {
 		if (!getContentPane().isAncestorOf(picLabel)) {
 			getContentPane().add(picLabel);
 		}
-		picLabel.setImage(imagePath + curImageStr);
+		picLabel.setImage(imagePath + curImageStr,_s,_r);
 
-	}
-
-	public void setMarker(double lat, double lon) {
-		picLabel.setMarker(lat, lon);
-	}
-
-	public void clearMarker() {
-		picLabel.clearMarker();
 	}
 
 	public void hideImage() {
@@ -159,18 +157,19 @@ public class JxMap extends JFrame implements Runnable {
 
 class MyLabel extends JLabel {
 
-	// double r = Math.toRadians(-23);
-	double[] s = { 3111798, 3112660 };
-	double[] ul = { 1.3004187, 103.7864650 };
-	double[] lr = { 1.2981801, 103.7890214 };
-	Dimension dim = new Dimension(7955, 6968);
+	private double[] scale = { 3111798, 3112660 };
+	private double[] reference = { 1.3004187, 103.7864650 };
 
-	double[] marker = { Double.NaN, Double.NaN };
+	List<Point> marker = new LinkedList<Point>();
+
+	Dimension iconSize = null;
+	Point iconOfst = null;
+
+	double iconRatio = Double.NaN;
 
 	private double graphicTranslateX = 0;
 	private double graphicTranslateY = 0;
 	private double graphicScale = 1;
-
 	ImageIcon icon = null;
 
 	public MyLabel() {
@@ -179,6 +178,13 @@ class MyLabel extends JLabel {
 		this.addMouseListener(m);
 		this.addMouseMotionListener(m);
 		this.addMouseWheelListener(m);
+		this.addComponentListener(new ComponentAdapter() {
+			public void componentResized(ComponentEvent e) {
+				iconSize = null;
+				iconOfst = null;
+				iconRatio = Double.NaN;
+			}
+		});
 
 	}
 
@@ -193,21 +199,34 @@ class MyLabel extends JLabel {
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setTransform(tx);
 
-		double ratio = calcRatio(icon.getIconWidth(), icon.getIconHeight(),
-				getWidth(), getHeight());
-		int w = new Double(icon.getIconWidth() * ratio).intValue();
-		int h = new Double(icon.getIconHeight() * ratio).intValue();
-		int x = (getWidth() - w) / 2;
-		int y = (getHeight() - h) / 2;
-		g2.clearRect(0, 0, getWidth(), getHeight());
-		g2.drawImage(icon.getImage(), x, y, w, h, null);
+		if (iconSize == null || iconOfst == null || Double.isNaN(iconRatio)) {
+			int sw = icon.getIconWidth();
+			int sh = icon.getIconHeight();
+			int dw = getWidth();
+			int dh = getHeight();
 
-		if (!Double.isNaN(marker[0])) {
+			iconRatio = calcRatio(sw, sh, dw, dh);
+
+			int imageW = (int) (sw * iconRatio);
+			int imageH = (int) (sh * iconRatio);
+			int imageX = (dw - imageW) / 2;
+			int imageY = (dh - imageH) / 2;
+
+			iconSize = new Dimension(imageW, imageH);
+			iconOfst = new Point(imageX, imageY);
+		}
+
+		g2.clearRect(0, 0, getWidth(), getHeight());
+		g2.drawImage(icon.getImage(), iconOfst.x, iconOfst.y,
+				(int) iconSize.getWidth(), (int) iconSize.getHeight(), null);
+
+		if (marker.size() > 0) {
 			g2.setColor(Color.RED);
 			// g2.fillOval(x + 378, y + 187, 20, 20);
-			g2.fillOval(x + (int) (marker[0] * ratio), y
-					+ (int) (marker[1] * ratio), 20, 20);
-			// 3783.9463679982564, 1876.0001819998631
+			for (Point p : marker) {
+				g2.fillOval(iconOfst.x + (int) (p.x * iconRatio), iconOfst.y
+						+ (int) (p.y * iconRatio), 10, 10);
+			}
 		}
 	}
 
@@ -221,27 +240,25 @@ class MyLabel extends JLabel {
 		}
 	}
 
-	public void setImage(String filename) {
-		BufferedImage myPicture;
-		try {
-			myPicture = ImageIO.read(new File(filename));
-			icon = new ImageIcon(myPicture);
-			setIcon(icon);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void setImage(String filename, double[] _s, double[] _r) {
+		icon = new ImageIcon(filename);
+		setIcon(icon);
+		iconSize = null;
+		iconOfst = null;
+		iconRatio = Double.NaN;
+		scale = _s;
+		reference = _r;
 	}
 
 	public void setMarker(double lat, double lon) {
-		marker[0] = (lon - ul[1]) * s[0];
-		marker[1] = (ul[0] - lat) * s[1];
+		Point p = new Point((int) ((lon - reference[1]) * scale[0]),
+				(int) ((reference[0] - lat) * scale[1]));
+		marker.add(p);
 		repaint();
 	}
 
 	public void clearMarker() {
-		marker[0] = Double.NaN;
-		marker[1] = Double.NaN;
+		marker.clear();
 	}
 
 	class Mouse implements MouseListener, MouseMotionListener,

@@ -27,7 +27,7 @@ public class ClientTest {
 	public ClientTest() {
 
 		BasicConfigurator.configure();
-		log.setLevel(Level.DEBUG);
+		log.setLevel(Level.INFO);
 
 		INS ins = new INS();
 
@@ -37,13 +37,15 @@ public class ClientTest {
 
 		new ClientTest();
 
+		String lastMap = "";
+
 		JxMap window = new JxMap();
 		EventQueue.invokeLater(window);
 
 		// String sensorLogFileName = "sensor/1446089995.751188.txt";
 		// String sensorLogFileName = "sensor/1446090161.558128.txt";
 		String sensorLogFileName = "sensor/1446090536.171343.txt";
-
+//		 String sensorLogFileName = "sensor/1447040772.693506-truncated.txt";
 		try {
 			Socket dataSock = new Socket("localhost", DataServer.PORT);
 			DataOutputStream dataOs = new DataOutputStream(
@@ -56,25 +58,38 @@ public class ClientTest {
 			while ((line = dataBr.readLine()) != null) {
 				lineCnt++;
 				IOUtils.write(line + '\n', dataOs);
-				Thread.sleep(1);
-				if (lineCnt % 500 == 0) {
-					String gps = query(RequestServer.RQTGPS);
-					String mapname = query(RequestServer.RQTMAPNAME + "," + gps);
-					log.info("GPS: " + gps + "\tMap name: " + mapname);
 
-					String[] lle = gps.split(",");
-					if (lle.length > 1) {
-						double lat = Double.parseDouble(lle[0]);
-						double lon = Double.parseDouble(lle[1]);
-						if (mapname.compareTo("") == 0) {
-							window.clearMarker();
-							window.hideImage();
-							window.setAddressLocation(lat, lon);
-						} else {
-							window.dispImage(mapname);
-							window.setMarker(lat, lon);
+				if (lineCnt % 100 == 0) {
+					Thread.sleep(50);
+					String[] gps = query(RequestServer.RQTGPS).split(",");
+					String mapname = query(RequestServer.RQTMAPNAME);
+
+					log.trace("GPS: " + gps + "\tMap name: " + mapname);
+
+					if (gps.length > 1) {
+						double lat = Double.parseDouble(gps[0]);
+						double lon = Double.parseDouble(gps[1]);
+						if (lastMap.compareTo(mapname) != 0) {
+							if (mapname.compareTo("") == 0) {
+//							if (true) {
+								window.hideImage();
+							} else {
+
+								String[] prmt = query(
+										RequestServer.RQTMAPPRMT + ","
+												+ mapname).split(",");
+								double[] scale = new double[] {
+										Double.parseDouble(prmt[0]),
+										Double.parseDouble(prmt[1]) };
+								double[] reference = new double[] {
+										Double.parseDouble(prmt[2]),
+										Double.parseDouble(prmt[3]) };
+								window.dispImage(mapname, scale, reference);
+
+							}
+							lastMap = mapname;
 						}
-
+						window.setAddressLocation(lat, lon);
 					}
 
 				}
@@ -94,9 +109,6 @@ public class ClientTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		// log.info(query(RequestServer.RQTGPS));
-		// log.info(query(RequestServer.RQTLOC));
 
 	}
 

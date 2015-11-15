@@ -91,7 +91,7 @@ public class GUILocalization {
 		}
 
 		if (Double.isNaN(speedkmh) && data instanceof GPSData) {
-			speedkmh = ((GPSData) data).speedkmh / 3.6;
+			speedkmh = ((GPSData) data).speedms / 3.6;
 			if (track.size() < 1) {
 				// initialize position
 				double[] p = ((GPSData) data).gps;
@@ -207,7 +207,7 @@ public class GUILocalization {
 	}
 
 	private void increment(GPSData data) {
-		speedkmh = data.speedkmh;
+		speedkmh = data.speedms;
 		// Vector2D gpsAcc = new Vector2D(data.accuracy);
 		// if (gpsAcc.getNorm() <= 6) {
 		// if (data.speedkmh >= 10) {

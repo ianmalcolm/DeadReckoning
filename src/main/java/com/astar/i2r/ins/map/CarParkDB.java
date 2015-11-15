@@ -1,43 +1,57 @@
 package com.astar.i2r.ins.map;
 
 import java.awt.Polygon;
+import java.awt.geom.Path2D;
 import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.astar.i2r.ins.motion.GeoPoint;
 
 public class CarParkDB {
 
-	private static List<CarParkInterface> carparks = new LinkedList<CarParkInterface>();
+	private static Map<Path2D, List<CarPark>> carparks = new HashMap<Path2D, List<CarPark>>();
 
 	static {
 
-		// private double altitude;
-		// private String filename;
-		// private String name;
-		// private double rotation;
-		// private double scale;
-		// private GeoPoint reference = new GeoPoint(1.2992444, 103.7875234, 0,
-		// 0);
-		// private Polygon bbox;
+		double altCalib = 0;
+		double latCalib = 0;
+		double lonCalib = 0;
+		double scaleCalib = 1;
+		double[] alt = { -18.4 + altCalib, -21.4 + altCalib, -24.6 + altCalib,
+				-27.8 + altCalib };
 
-		double[] alt = { -12, -16, -20, -24 };
 		String[] fn = { "AD-FP-B3.png", "AD-FP-B4.png", "AD-FP-B5.png",
 				"AD-FP-B6.png" };
 		double rot = (-23) / 180 * Math.PI;
-		double sc = 0;
-		GeoPoint rf = new GeoPoint(1.2992444, 103.7875234, 0, 0);
-		Polygon bbox = new Polygon();
-		bbox.addPoint(CarPark.toInt(1.3000719), CarPark.toInt(103.7872963));
-		bbox.addPoint(CarPark.toInt(1.2989326), CarPark.toInt(103.7867392));
-		bbox.addPoint(CarPark.toInt(1.2983356), CarPark.toInt(103.7880767));
-		bbox.addPoint(CarPark.toInt(1.2995431), CarPark.toInt(103.7885511));
 
+		// x and y
+		double[] sc = { 3503501.740 * scaleCalib, 3504428.341 * scaleCalib };
+
+		// heading: 2.6441738 from north
+		// lat and lon
+		double[] rf = { 1.3002204 + latCalib, 103.7866166 + lonCalib };
+		// double[] ul = {1.3002204,103.7866166};
+		// double[] lr = {1.2982332,103.7888869}; // lower right corner of the
+		// image
+		// Dimension imageDim = new Dimension(7954,6964); // image size
+
+		Path2D bbox = new Path2D.Double();
+		bbox.moveTo(1.3000719, 103.7872963);
+		bbox.lineTo(1.3000719, 103.7872963);
+		bbox.lineTo(1.2989326, 103.7867392);
+		bbox.lineTo(1.2983356, 103.7880767);
+		bbox.lineTo(1.2995431, 103.7885511);
+		bbox.lineTo(1.3000719, 103.7872963);
+
+		carparks.put(bbox, new LinkedList<CarPark>());
 		for (int i = 0; i < 4; i++) {
-			carparks.add(new CarPark(alt[i], fn[i], fn[i], rot, sc, rf, bbox));
+			carparks.get(bbox).add(
+					new CarPark(alt[i], fn[i], fn[i], rot, sc, rf, bbox));
 		}
 	}
 
@@ -50,12 +64,11 @@ public class CarParkDB {
 		}
 	}
 
-	public static String getMap(String latStr, String lonStr, String eleStr) {
-		List<CarParkInterface> candidates = new LinkedList<CarParkInterface>();
-		for (CarParkInterface park : carparks) {
-			if (park.isInBBox(Double.parseDouble(latStr),
-					Double.parseDouble(lonStr))) {
-				candidates.add(park);
+	public static String getMap(double lat, double lon, double ele) {
+		List<CarPark> candidates = new LinkedList<CarPark>();
+		for (Path2D bbox : carparks.keySet()) {
+			if (bbox.contains(lat, lon)) {
+				candidates.addAll(carparks.get(bbox));
 			}
 		}
 
@@ -63,9 +76,9 @@ public class CarParkDB {
 			return "";
 		}
 
-		Comparator<CarParkInterface> cpt = new Comparator<CarParkInterface>() {
+		Comparator<CarPark> cpt = new Comparator<CarPark>() {
 			@Override
-			public int compare(CarParkInterface arg0, CarParkInterface arg1) {
+			public int compare(CarPark arg0, CarPark arg1) {
 				if (arg0.getAltitude() == arg1.getAltitude()) {
 					return 1;
 				} else {
@@ -75,8 +88,6 @@ public class CarParkDB {
 			}
 		};
 		Collections.sort(candidates, Collections.reverseOrder(cpt));
-
-		double ele = Double.parseDouble(eleStr);
 
 		if (ele > candidates.get(0).getAltitude()) {
 			return candidates.get(0).filename();
@@ -89,6 +100,27 @@ public class CarParkDB {
 		}
 
 		return "";
+	}
+
+	public static double[] getMapParameter(String name) {
+
+		for (List<CarPark> list : carparks.values()) {
+			for (CarPark park : list) {
+				if (park.name().compareTo(name) == 0) {
+					return park.getMapParameter();
+				}
+			}
+		}
+		return null;
+	}
+
+	public static boolean isInBuilding(double lat, double lon) {
+		for (Path2D bbox : carparks.keySet()) {
+			if (bbox.contains(lat, lon)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

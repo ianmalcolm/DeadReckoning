@@ -8,7 +8,6 @@ public enum NavigationState implements State {
 		public boolean process(Context context) {
 			if (context.isGPSOK()) {
 				context.GPSUpdate();
-				context.calibrate();
 			} else {
 				context.state(NavigationState.SLAM);
 			}
@@ -20,10 +19,9 @@ public enum NavigationState implements State {
 			if (context.isGPSOK()) {
 				context.GPSUpdate();
 				context.state(NavigationState.GPS);
-			} else if (context.step()) {
-				if (!context.SLAMUpdate()) {
-					context.localize();
-				}
+			} else {
+				context.SLAMUpdate();
+				context.localize();
 			}
 			return true;
 		}

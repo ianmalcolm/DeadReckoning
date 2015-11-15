@@ -33,7 +33,7 @@ public class Localization extends Thread {
 			Map<Integer, Context> _cList, GeoMap map) {
 		dataQ = _dataQ;
 		cList = _cList;
-		Context car = new Vehicle(map);
+		Context car = new Vehicle();
 		cList.put(INS.car0, car);
 
 	}

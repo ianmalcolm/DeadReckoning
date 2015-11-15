@@ -9,23 +9,23 @@ public class CANData extends Data {
 
 	public static final String NAME = "CAN";
 
-	public final int vehSpd;
+	public final int vehSpdkmh;
 
 	public CANData(Element ele) {
 		super((new Double(Double.parseDouble(ele
 				.getAttributeValue(Data.TIMETAG)) * 1000)).longValue());
 
 		// TODO Auto-generated constructor stub
-		vehSpd = Integer.parseInt(ele.getChild("VehSpd").getText(), 16);
+		vehSpdkmh = Integer.parseInt(ele.getChild("VehSpd").getText(), 16);
 
 	}
 
-	public static final String REGEX = "^CAN:(\\d+?),.+41 0D (..)\\s*?\\n";
+	public static final String REGEX = "^CAN:(\\d+?),.+41 0D (..).*?\\n";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public CANData(Matcher m) {
 		super(m.group(1));
-		vehSpd = Integer.parseInt(m.group(2),16);
+		vehSpdkmh = Integer.parseInt(m.group(2),16);
 	}
 
 }

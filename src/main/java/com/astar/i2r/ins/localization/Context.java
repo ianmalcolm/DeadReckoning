@@ -10,17 +10,15 @@ public interface Context {
 
 	void incoming(Data data);
 
-	boolean calibrate();
-
 	boolean isGPSOK();
 
-	boolean step();
+	boolean SLAMUpdate();
 
 	boolean localize();
 
 	boolean GPSUpdate();
-
-	boolean SLAMUpdate();
+	
+	double getRelativeAltitude();
 	
 	GeoPoint getGPS();
 }

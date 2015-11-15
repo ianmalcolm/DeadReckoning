@@ -14,12 +14,16 @@ def prettify(elem):
 MAG='Magnetic'
 GPS='GPS'
 MOT='Motion'
+COM='Compass'
 CAN='CAN'
+BAR='Baro'
 
-Sensors		= {	MAG	:	re.compile(r'^ATS:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?)\n'),
-				GPS	:	re.compile(r'^GTS:(.+?),GPA:(.+?),GPO:(.+?),GPH:(.+?),GPV:(.+?),GPS:(.+?)\n'),
-				MOT	:	re.compile(r'^MTS:(.+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?),MA:(.+?)\n'),
-				CAN	:	re.compile(r'^CAN:(.+?),.+?41 0D (\d\d).*\n')
+Sensors		= {	MAG	:	re.compile(r'^ATS:(\d+?),MX:(.+?),MY:(.+?),MZ:(.+?)\n'),
+				GPS	:	re.compile(r'^GTS:(\d+?),GPA:(.+?),GPO:(.+?),GPH:(.+?),GPV:(.+?),GPS:(.+?)\n'),
+				MOT	:	re.compile(r'^MTS:(\d+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?),MA:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\n'),
+				COM	:	re.compile(r'^HTS:(\d+?),MD:(.+?),RH:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\n'),
+				CAN	:	re.compile(r'^CAN:(\d+?),.+41 0D (..)\s*?\n'),
+				BAR	:	re.compile(r'^LTS:(.+?),AR:(.+?),PV:(.+?)\n')
 }
 
 
@@ -38,7 +42,7 @@ GPSField = [	'Lat', 'Lon', 'HorAcc', 'VerAcc', 'Spd' ]
 #newLocation.verticalAccuracy
 #newLocation.speed
 
-MOTField = [	'GraX', 'GraY', 'GraZ', 'AccX', 'AccY', 'AccZ', 'Roll', 'Pitch', 'Yaw', 'RelRoll', 'RelPitch', 'RelYaw', 'RotRatX', 'RotRatY', 'RotRatZ', 'MagX', 'MagY', 'MagZ', 'MagAcc' ]
+MOTField = [	'GraX', 'GraY', 'GraZ', 'AccX', 'AccY', 'AccZ', 'Roll', 'Pitch', 'Yaw', 'RelRoll', 'RelPitch', 'RelYaw', 'RotRatX', 'RotRatY', 'RotRatZ', 'MagX', 'MagY', 'MagZ', 'MagAcc','HeadingX','HeadingY','HeadingZ' ]
 
 #dm.gravity.x
 #dm.gravity.y
@@ -60,14 +64,23 @@ MOTField = [	'GraX', 'GraY', 'GraZ', 'AccX', 'AccY', 'AccZ', 'Roll', 'Pitch', 'Y
 #dm.magneticField.field.z
 #dm.magneticField.accuracy
 
+COMField = [	'MagneticDirection',
+				'RotationHeading',
+				'HeadingX',
+				'HeadingY',
+				'HeadingZ' ]
 
+BARField = [	'Altitude',
+				'Pressure' ]
 
 CANField = [	'VehSpd'	]
 
 Field		= {	MAG	:	MAGField,
 				GPS	:	GPSField,
 				MOT	:	MOTField,
-				CAN	:	CANField
+				COM	:	COMField,
+				CAN	:	CANField,
+				BAR	:	BARField
 }
 
 

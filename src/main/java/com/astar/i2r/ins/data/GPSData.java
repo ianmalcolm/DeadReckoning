@@ -11,7 +11,7 @@ public class GPSData extends Data {
 
 	public final double[] gps = { 0, 0 };
 	public final double[] accuracy = { 0, 0 };
-	public final double speedkmh;
+	public final double speedms;
 
 	public GPSData(Element ele) {
 		super((new Double(Double.parseDouble(ele
@@ -20,7 +20,7 @@ public class GPSData extends Data {
 		gps[1] = Double.parseDouble(ele.getChild("Lon").getText());
 		accuracy[0] = Double.parseDouble(ele.getChild("HorAcc").getText());
 		accuracy[1] = Double.parseDouble(ele.getChild("VerAcc").getText());
-		speedkmh = Double.parseDouble(ele.getChild("Spd").getText());
+		speedms = Double.parseDouble(ele.getChild("Spd").getText());
 
 	}
 
@@ -33,6 +33,6 @@ public class GPSData extends Data {
 		gps[1] = Double.parseDouble(m.group(3));
 		accuracy[0] = Double.parseDouble(m.group(4));
 		accuracy[1] = Double.parseDouble(m.group(5));
-		speedkmh = Double.parseDouble(m.group(6));
+		speedms = Double.parseDouble(m.group(6));
 	}
 }

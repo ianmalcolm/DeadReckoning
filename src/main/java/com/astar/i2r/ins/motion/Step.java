@@ -36,7 +36,7 @@ public class Step extends Vector3D {
 
 	public Step increment(Velocity v) {
 		double diff = (v.time.getTime() - time.getTime()) / 1000.0;
-		return new Step(add(v.scalarMultiply(diff/3.6)), v.time.getTime());
+		return new Step(add(v.scalarMultiply(diff)), v.time.getTime());
 	}
 
 	public GPXEntry getDestinationFrom(GPXEntry v) {

@@ -4,11 +4,11 @@ import java.util.Date;
 
 public class Speed {
 
-	public final double speed;
+	public final double speedms;
 	public final Date time;
 
-	public Speed(double spd, long t) {
-		speed = spd;
+	public Speed(double spdms, long t) {
+		speedms = spdms;
 		time = new Date(t);
 	}
 }

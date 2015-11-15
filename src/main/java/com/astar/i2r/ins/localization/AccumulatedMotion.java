@@ -41,7 +41,7 @@ public class AccumulatedMotion extends ArrayList<GeoPoint> {
 		}
 
 		if (speedkmh.isNaN() && data instanceof GPSData) {
-			speedkmh = ((GPSData) data).speedkmh / 3.6;
+			speedkmh = ((GPSData) data).speedms / 3.6;
 			if (size() < 1) {
 				// initialize position
 				double[] p = ((GPSData) data).gps;
@@ -132,7 +132,7 @@ public class AccumulatedMotion extends ArrayList<GeoPoint> {
 	}
 
 	private void increment(GPSData data) {
-		speedkmh = data.speedkmh;
+		speedkmh = data.speedms;
 		// Vector2D gpsAcc = new Vector2D(data.accuracy);
 		// if (gpsAcc.getNorm() <= 6) {
 		// if (data.speedkmh >= 10) {

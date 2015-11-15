@@ -15,6 +15,7 @@ import com.astar.i2r.ins.data.CompassData;
 import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.data.GPSData;
 import com.astar.i2r.ins.data.MotionData;
+import com.astar.i2r.ins.map.CarParkDB;
 import com.astar.i2r.ins.map.GeoMap;
 import com.astar.i2r.ins.motion.Attitude;
 import com.astar.i2r.ins.motion.GeoPoint;
@@ -27,33 +28,25 @@ class Vehicle implements Context {
 	private static final Logger log = Logger.getLogger(Vehicle.class.getName());
 
 	private static double GPSCALIBACCURACYTHRESHOLD = 10;
-	private static double GPSCALIBDISTANCETHRESHOLD = 6.66;
-
-	// private static double GPSCALIBACCURACYTHRESHOLD = 15;
-	// private static double GPSCALIBDISTANCETHRESHOLD = 4;
+	private static double GPSCALIBDISTANCETHRESHOLD = 10;
 
 	private static double GPSOKTHRESHOLD = 15;
 
 	private Attitude attitude = null;
-	private Speed speed;
-	private State state = NavigationState.SLAM;
+	private Speed speed = null;
+	private double compassHeading = Double.NaN;
 	private Data curData = null;
 	private GeoPoint curPos = null;
 	private GeoPoint lastAccGPS = null;
-	private double lastCompassHeading = 0;
 	private Vector3D GPSCalibVector = null;
-	private double yawCalib = 2.618;
+	// private double yawCalib = Double.NaN;
+	private double yawCalib = 2.32;
 	private boolean GPSOK = false;
 	private Step step = null;
-	private List<GeoPoint> steps = new ArrayList<GeoPoint>();
-	private GeoMap map = null;
-	private double curBaro = 0;
-	private double lastGPSOKBaro = 0;
-	private boolean GPSCalibrated = false;
+	private double baroAltitude = Double.NaN;
+	private double lpBaro = Double.NaN;
 
-	public Vehicle(GeoMap _m) {
-		map = _m;
-	}
+	private State state = NavigationState.SLAM;
 
 	@Override
 	public State state() {
@@ -67,71 +60,20 @@ class Vehicle implements Context {
 
 	// set the next state of a vehicle
 	@Override
-	public void state(State _state) {
-		state = _state;
+	public void state(State nextState) {
+
+		if (state == NavigationState.GPS && nextState == NavigationState.SLAM) {
+			step = new Step(0, 0, 0, curData.time);
+		} else if (state == NavigationState.SLAM
+				&& nextState == NavigationState.GPS) {
+			step = null;
+			lpBaro = baroAltitude;
+		}
+
+		state = nextState;
+
 		log.info("Switch into " + state.name() + " at "
 				+ new Date(curData.time).toString());
-	}
-
-	// calibrate the attitude of a vehicle
-	@Override
-	public boolean calibrate() {
-
-		if (curData instanceof GPSData) {
-			GPSData data = ((GPSData) curData);
-			if (isGPSAccurate(data)) {
-
-				GeoPoint curGPS = new GeoPoint(data.gps[0], data.gps[1], 0,
-						data.time);
-
-				if (lastAccGPS != null) {
-					Vector3D v = GeoPoint.distance(lastAccGPS, curGPS);
-					if (v.getNorm() > GPSCALIBDISTANCETHRESHOLD) {
-						GPSCalibVector = v;
-					} else {
-						GPSCalibVector = null;
-					}
-				} else {
-					GPSCalibVector = null;
-				}
-				lastAccGPS = curGPS;
-			} else {
-				GPSCalibVector = null;
-				lastAccGPS = null;
-			}
-		} else if (curData instanceof CompassData) {
-			CompassData data = ((CompassData) curData);
-			lastCompassHeading = data.rotationHeading;
-		}
-
-		if (curData instanceof MotionData) {
-			MotionData data = ((MotionData) curData);
-			// if (GPSCalibrated == false && !Double.isNaN(lastCompassHeading)
-			// && false) {
-			// double newCalib = getCompassCalibFactor(lastCompassHeading,
-			// data.cardan[2]);
-			// yawCalib = average(yawCalib, newCalib, 3.0 / 4);
-			// lastCompassHeading = Double.NaN;
-			// log.debug("Compass Heading Calibration Factor " + newCalib
-			// / Math.PI * 180 + "\t Averaged: " + yawCalib / Math.PI
-			// * 180);
-			// } else
-			if (GPSCalibVector != null) {
-
-				double newCalib = getGPSCalibFactor(GPSCalibVector,
-						data.cardan[2]);
-
-				yawCalib = average(yawCalib, newCalib, 3.0 / 4);
-				GPSCalibrated = true;
-				GPSCalibVector = null;
-				log.debug("GPS Heading Calibration Factor " + newCalib
-						/ Math.PI * 180 + "\t Averaged: " + yawCalib / Math.PI
-						* 180);
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	@Override
@@ -143,87 +85,101 @@ class Vehicle implements Context {
 			accuracy += data.accuracy[0] * data.accuracy[0];
 			accuracy += data.accuracy[1] * data.accuracy[1];
 			accuracy = Math.sqrt(accuracy);
+
 			if (accuracy > GPSOKTHRESHOLD) {
-				if (GPSOK = true) {
-					lastGPSOKBaro = curBaro;
-				}
 				GPSOK = false;
 			} else {
 				GPSOK = true;
 			}
+
+//			if (curPos != null) {
+//				if (CarParkDB.isInBuilding(curPos.lat, curPos.lon)) {
+//					GPSOK = false;
+//				}
+//			}
+
 		}
 		return GPSOK;
 	}
 
 	@Override
-	public boolean step() {
-		if (curPos == null) {
-			return false;
-		}
-		if (step == null) {
-			step = new Step(0, 0, 0, curData.time);
-		}
+	public boolean SLAMUpdate() {
 
 		if (curData instanceof CANData) {
-			step(((CANData) curData));
+			SLAMUpdate(((CANData) curData));
 		} else if (curData instanceof MotionData) {
-			step(((MotionData) curData));
+			SLAMUpdate(((MotionData) curData));
 		} else if (curData instanceof CompassData) {
-			CompassData data = ((CompassData) curData);
-			lastCompassHeading = data.rotationHeading;
+			SLAMUpdate(((CompassData) curData));
 		} else if (curData instanceof BaroData) {
-			BaroData data = ((BaroData) curData);
-			curBaro = data.altitude;
+			SLAMUpdate(((BaroData) curData));
+		} else if (curData instanceof GPSData) {
+			SLAMUpdate(((GPSData) curData));
+		}
+
+		return true;
+	}
+
+	private void SLAMUpdate(CANData data) {
+		speed = new Speed(data.vehSpdkmh / 3.6, data.time);
+
+		if (attitude == null) {
+			return;
+		}
+
+		Vector3D vel = attitude.getVelocity(speed.speedms);
+		Velocity approxVel = new Velocity(vel, data.time);
+		step = step.increment(approxVel);
+
+		if (curPos == null) {
+			return;
 		}
 
 		if (step.getNorm() > Step.MINSTEP) {
-			return true;
-		} else {
-			return false;
+			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
+			curPos = curPos.add(step);
+			step = new Step(0, 0, 0, data.time);
 		}
 	}
 
-	private void step(CANData data) {
-		speed = new Speed(data.vehSpd, data.time);
-		Vector3D vel = attitude.getVelocity(speed.speed);
-		Velocity approxVel = new Velocity(vel, data.time);
-		step = step.increment(approxVel);
-	}
-
-	private void step(MotionData data) {
-
-		// if (GPSCalibrated == false && !Double.isNaN(lastCompassHeading)
-		// && false) {
-		// double newCalib = getCompassCalibFactor(lastCompassHeading,
-		// data.cardan[2]);
-		// yawCalib = average(yawCalib, newCalib, 3.0 / 4);
-		// lastCompassHeading = Double.NaN;
-		// log.debug("Compass Heading Calibration Factor " + newCalib
-		// / Math.PI * 180 + "\t Averaged: " + yawCalib / Math.PI
-		// * 180);
-		// }
+	private void SLAMUpdate(MotionData data) {
 
 		attitude = new Attitude(data.cardan, yawCalib, data.time);
-		Vector3D vel = attitude.getVelocity(speed.speed);
+
+		if (speed == null) {
+			return;
+		}
+
+		Vector3D vel = attitude.getVelocity(speed.speedms);
 		Velocity approxVel = new Velocity(vel, data.time);
 		step = step.increment(approxVel);
+
+		if (curPos == null) {
+			return;
+		}
+
+		if (step.getNorm() > Step.MINSTEP) {
+			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
+			curPos = curPos.add(step);
+			step = new Step(0, 0, 0, data.time);
+		}
+	}
+
+	private void SLAMUpdate(CompassData data) {
+		compassHeading = data.rotationHeading;
+	}
+
+	private void SLAMUpdate(GPSData data) {
+		// GPS data in SLAM mode?
+	}
+
+	private void SLAMUpdate(BaroData data) {
+		baroAltitude = data.altitude;
 	}
 
 	@Override
 	public boolean localize() {
 
-		// GeoPosition calibPos = matcher.localize(steps);
-		//
-		// if (calibPos != null) {
-		// curPos = calibPos;
-		// steps.clear();
-		// steps.add(curPos);
-		//
-		// return true;
-		// } else {
-		//
-		// return false;
-		// }
 		return false;
 	}
 
@@ -241,37 +197,86 @@ class Vehicle implements Context {
 
 	@Override
 	public boolean GPSUpdate() {
-		if (curPos == null) {
-			curPos = new GeoPoint(0, 0, 0, curData.time);
-		}
 
 		if (curData instanceof BaroData) {
-			BaroData data = ((BaroData) curData);
-			double lat = curPos.lat;
-			double lon = curPos.lon;
-			curPos = new GeoPoint(lat, lon, data.altitude, data.time);
-			curBaro = data.altitude;
+			GPSUpdate((BaroData) curData);
 		} else if (curData instanceof GPSData) {
-			GPSData data = ((GPSData) curData);
-			double ele = curPos.ele;
-			curPos = new GeoPoint(data.gps[0], data.gps[1], ele, data.time);
-			speed = new Speed(data.speedkmh, data.time);
-
+			GPSUpdate((GPSData) curData);
+		} else if (curData instanceof CANData) {
+			GPSUpdate((CANData) curData);
+		} else if (curData instanceof MotionData) {
+			GPSUpdate((MotionData) curData);
+		} else if (curData instanceof CompassData) {
+			GPSUpdate((CompassData) curData);
 		}
 
-		step = null;
 		return true;
 	}
 
-	@Override
-	public boolean SLAMUpdate() {
-		curPos = curPos.add(step);
-//		curPos = new GeoPoint(curPos.lat, curPos.lon, curBaro-lastGPSOKBaro,
-//				curPos.time.getTime());
-		curPos = new GeoPoint(curPos.lat, curPos.lon, curBaro,
-		curPos.time.getTime());
-		step = null;
-		return true;
+	private void GPSUpdate(BaroData data) {
+		baroAltitude = data.altitude;
+		if (Double.isNaN(lpBaro)) {
+			lpBaro = baroAltitude;
+		} else {
+			double ratio = 49.0 / 50;
+			lpBaro = lpBaro * ratio + baroAltitude * (1 - ratio);
+		}
+	}
+
+	private void GPSUpdate(CANData data) {
+
+	}
+
+	private void GPSUpdate(MotionData data) {
+
+		if (GPSCalibVector != null) {
+			double newCalib = getGPSCalibFactor(GPSCalibVector, data.cardan[2]);
+
+			if (Double.isNaN(yawCalib)) {
+				yawCalib = newCalib;
+			} else {
+				yawCalib = angleAverage(yawCalib, newCalib, 3.0 / 4);
+			}
+
+			GPSCalibVector = null;
+			log.debug("GPS Heading Calibration Factor " + newCalib / Math.PI
+					* 180 + "\t Averaged: " + yawCalib / Math.PI * 180);
+		}
+
+		attitude = new Attitude(data.cardan, yawCalib, data.time);
+	}
+
+	private void GPSUpdate(GPSData data) {
+
+		curPos = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
+		speed = new Speed(data.speedms, data.time);
+
+		// generator calibration factor
+		if (isGPSAccurate(data)) {
+
+			GeoPoint curGPS = new GeoPoint(data.gps[0], data.gps[1], 0,
+					data.time);
+
+			if (lastAccGPS != null) {
+				Vector3D v = GeoPoint.distance(lastAccGPS, curGPS);
+				if (v.getNorm() > GPSCALIBDISTANCETHRESHOLD) {
+					GPSCalibVector = v;
+				} else {
+					GPSCalibVector = null;
+				}
+			} else {
+				GPSCalibVector = null;
+			}
+			lastAccGPS = curGPS;
+		} else {
+			GPSCalibVector = null;
+			lastAccGPS = null;
+		}
+
+	}
+
+	private void GPSUpdate(CompassData data) {
+
 	}
 
 	@Override
@@ -280,7 +285,7 @@ class Vehicle implements Context {
 		return curPos;
 	}
 
-	private double average(double a1, double a2, double rate) {
+	private double angleAverage(double a1, double a2, double rate) {
 
 		a1 = a1 % (Math.PI * 2);
 		a2 = a2 % (Math.PI * 2);
@@ -310,24 +315,14 @@ class Vehicle implements Context {
 
 	}
 
-	/**
-	 * 
-	 * @param comheading
-	 *            degree
-	 * @param attyaw
-	 *            radian
-	 * @return calibration factor for attitude
-	 */
-	private double getCompassCalibFactor(double comheading, double attyaw) {
-		double comCalib = 3.479938117 - 1.85;
-		double comyaw = (-comheading) / 180 * Math.PI;
-		comyaw = comyaw + comCalib;
-		// comyaw = comyaw % (Math.PI * 2);
-		double calib = (comyaw - attyaw);
-		// calib = calib % (Math.PI * 2);
-
-		return calib;
-
+	@Override
+	public double getRelativeAltitude() {
+		if (state == NavigationState.GPS) {
+			return 0;
+		} else if (state == NavigationState.SLAM) {
+			return baroAltitude - lpBaro;
+		}
+		return 0;
 	}
 
 }
