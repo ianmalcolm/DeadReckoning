@@ -1,12 +1,7 @@
 package com.astar.i2r.ins.localization;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-
-import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.log4j.Logger;
 
 import com.astar.i2r.ins.data.BaroData;
@@ -15,8 +10,6 @@ import com.astar.i2r.ins.data.CompassData;
 import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.data.GPSData;
 import com.astar.i2r.ins.data.MotionData;
-import com.astar.i2r.ins.map.CarParkDB;
-import com.astar.i2r.ins.map.GeoMap;
 import com.astar.i2r.ins.motion.Attitude;
 import com.astar.i2r.ins.motion.GeoPoint;
 import com.astar.i2r.ins.motion.Speed;
