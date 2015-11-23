@@ -44,8 +44,13 @@ public class ClientTest {
 
 		// String sensorLogFileName = "sensor/1446089995.751188.txt";
 		// String sensorLogFileName = "sensor/1446090161.558128.txt";
-		String sensorLogFileName = "sensor/1446090536.171343.txt";
-//		 String sensorLogFileName = "sensor/1447040772.693506-truncated.txt";
+
+		// String sensorLogFileName = "sensor/1447040772.693506.txt";
+
+		// String sensorLogFileName = "sensor/1444893828.912658-withGT.txt";
+		// String sensorLogFileName = "sensor/1446090536.171343-withGT.txt";
+		 String sensorLogFileName = "sensor/1447040772.693506-withGT.txt";
+
 		try {
 			Socket dataSock = new Socket("localhost", DataServer.PORT);
 			DataOutputStream dataOs = new DataOutputStream(
@@ -64,14 +69,11 @@ public class ClientTest {
 					String[] gps = query(RequestServer.RQTGPS).split(",");
 					String mapname = query(RequestServer.RQTMAPNAME);
 
-					log.trace("GPS: " + gps + "\tMap name: " + mapname);
-
 					if (gps.length > 1) {
 						double lat = Double.parseDouble(gps[0]);
 						double lon = Double.parseDouble(gps[1]);
 						if (lastMap.compareTo(mapname) != 0) {
 							if (mapname.compareTo("") == 0) {
-//							if (true) {
 								window.hideImage();
 							} else {
 
@@ -82,16 +84,16 @@ public class ClientTest {
 										Double.parseDouble(prmt[0]),
 										Double.parseDouble(prmt[1]) };
 								double[] reference = new double[] {
-										Double.parseDouble(prmt[2]),
-										Double.parseDouble(prmt[3]) };
+										Double.parseDouble(prmt[2]) - 0.000075,
+										Double.parseDouble(prmt[3]) - 0.000075 };
+								// Double.parseDouble(prmt[2]),
+								// Double.parseDouble(prmt[3]) };
 								window.dispImage(mapname, scale, reference);
-
 							}
 							lastMap = mapname;
 						}
 						window.setAddressLocation(lat, lon);
 					}
-
 				}
 			}
 
@@ -123,9 +125,9 @@ public class ClientTest {
 					reqSock.getOutputStream());
 
 			IOUtils.write(cmd + '\n', reqOs);
-			log.trace(cmd);
+			log.trace("Send query to server: " + cmd);
 			ans = reqBr.readLine();
-			log.trace(ans);
+			log.trace("Received answer from server: " + ans);
 
 			reqOs.flush();
 			reqOs.close();

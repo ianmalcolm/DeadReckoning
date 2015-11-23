@@ -1,12 +1,9 @@
 package com.astar.i2r.ins.localization;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.log4j.Logger;
 
 import com.astar.i2r.ins.data.BaroData;
@@ -14,9 +11,9 @@ import com.astar.i2r.ins.data.CANData;
 import com.astar.i2r.ins.data.CompassData;
 import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.data.GPSData;
+import com.astar.i2r.ins.data.GroundTruth;
 import com.astar.i2r.ins.data.MotionData;
 import com.astar.i2r.ins.map.CarParkDB;
-import com.astar.i2r.ins.map.GeoMap;
 import com.astar.i2r.ins.motion.Attitude;
 import com.astar.i2r.ins.motion.GeoPoint;
 import com.astar.i2r.ins.motion.Speed;
@@ -34,14 +31,12 @@ class Vehicle implements Context {
 
 	private Attitude attitude = null;
 	private Speed speed = null;
-	private double compassHeading = Double.NaN;
 	private Data curData = null;
 	private GeoPoint curPos = null;
 	private GeoPoint lastAccGPS = null;
 	private Vector3D GPSCalibVector = null;
 	// private double yawCalib = Double.NaN;
 	private double yawCalib = 2.32;
-	private boolean GPSOK = false;
 	private Step step = null;
 	private double baroAltitude = Double.NaN;
 	private double lpBaro = Double.NaN;
@@ -62,44 +57,53 @@ class Vehicle implements Context {
 	@Override
 	public void state(State nextState) {
 
-		if (state == NavigationState.GPS && nextState == NavigationState.SLAM) {
+		assert nextState != state;
+		state = nextState;
+
+		if (state == NavigationState.SLAM) {
 			step = new Step(0, 0, 0, curData.time);
-		} else if (state == NavigationState.SLAM
-				&& nextState == NavigationState.GPS) {
+			SLAMUpdate();
+		} else if (state == NavigationState.GPS) {
 			step = null;
 			lpBaro = baroAltitude;
+			GPSUpdate();
 		}
-
-		state = nextState;
 
 		log.info("Switch into " + state.name() + " at "
 				+ new Date(curData.time).toString());
 	}
 
 	@Override
-	public boolean isGPSOK() {
+	public State needStateSwitch() {
+		State nextState = null;
+
 		if (curData instanceof GPSData) {
-			GPSData data = ((GPSData) curData);
-
-			double accuracy = 0;
-			accuracy += data.accuracy[0] * data.accuracy[0];
-			accuracy += data.accuracy[1] * data.accuracy[1];
-			accuracy = Math.sqrt(accuracy);
-
-			if (accuracy > GPSOKTHRESHOLD) {
-				GPSOK = false;
+			if (isGPSOK(((GPSData) curData))) {
+				nextState = NavigationState.GPS;
 			} else {
-				GPSOK = true;
+				nextState = NavigationState.SLAM;
 			}
-
-//			if (curPos != null) {
-//				if (CarParkDB.isInBuilding(curPos.lat, curPos.lon)) {
-//					GPSOK = false;
-//				}
-//			}
-
 		}
-		return GPSOK;
+
+		if (curPos != null) {
+			if (CarParkDB.isInBuilding(curPos.lat, curPos.lon)) {
+				nextState = NavigationState.SLAM;
+			}
+		}
+
+		if (nextState == state) {
+			return null;
+		} else {
+			return nextState;
+		}
+	}
+
+	private boolean isGPSOK(GPSData data) {
+		double accuracy = 0;
+		accuracy += data.accuracy[0] * data.accuracy[0];
+		accuracy += data.accuracy[1] * data.accuracy[1];
+		accuracy = Math.sqrt(accuracy);
+		return accuracy < GPSOKTHRESHOLD;
 	}
 
 	@Override
@@ -115,6 +119,8 @@ class Vehicle implements Context {
 			SLAMUpdate(((BaroData) curData));
 		} else if (curData instanceof GPSData) {
 			SLAMUpdate(((GPSData) curData));
+		} else if (curData instanceof GroundTruth) {
+			SLAMUpdate(((GroundTruth) curData));
 		}
 
 		return true;
@@ -125,6 +131,10 @@ class Vehicle implements Context {
 
 		if (attitude == null) {
 			return;
+		}
+
+		if (step == null) {
+			step = new Step(0, 0, 0, data.time);
 		}
 
 		Vector3D vel = attitude.getVelocity(speed.speedms);
@@ -150,6 +160,10 @@ class Vehicle implements Context {
 			return;
 		}
 
+		if (step == null) {
+			step = new Step(0, 0, 0, data.time);
+		}
+
 		Vector3D vel = attitude.getVelocity(speed.speedms);
 		Velocity approxVel = new Velocity(vel, data.time);
 		step = step.increment(approxVel);
@@ -161,12 +175,14 @@ class Vehicle implements Context {
 		if (step.getNorm() > Step.MINSTEP) {
 			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
 			curPos = curPos.add(step);
+			// log.info("Step " + step.getNorm() + " at speed " +
+			// speed.speedms);
 			step = new Step(0, 0, 0, data.time);
+
 		}
 	}
 
 	private void SLAMUpdate(CompassData data) {
-		compassHeading = data.rotationHeading;
 	}
 
 	private void SLAMUpdate(GPSData data) {
@@ -175,6 +191,25 @@ class Vehicle implements Context {
 
 	private void SLAMUpdate(BaroData data) {
 		baroAltitude = data.altitude;
+		if (Double.isNaN(lpBaro)) {
+			lpBaro = data.altitude;
+		}
+	}
+
+	private void SLAMUpdate(GroundTruth data) {
+
+		double e = 0;
+		if (curPos != null) {
+			e = curPos.ele;
+		}
+		curPos = new GeoPoint(data.lat, data.lon, e, data.time);
+		if (attitude != null) {
+			double alpha = attitude.getVelocity(1).getAlpha() + Math.PI / 2;
+			double gtcalib = data.heading + Math.PI - alpha;
+			yawCalib += gtcalib;
+		}
+		speed = new Speed(data.speedms, data.time);
+		step = null;
 	}
 
 	@Override
@@ -208,6 +243,8 @@ class Vehicle implements Context {
 			GPSUpdate((MotionData) curData);
 		} else if (curData instanceof CompassData) {
 			GPSUpdate((CompassData) curData);
+		} else if (curData instanceof GroundTruth) {
+			GPSUpdate((GroundTruth) curData);
 		}
 
 		return true;
@@ -279,6 +316,20 @@ class Vehicle implements Context {
 
 	}
 
+	private void GPSUpdate(GroundTruth data) {
+		double e = 0;
+		if (curPos != null) {
+			e = curPos.ele;
+		}
+		curPos = new GeoPoint(data.lat, data.lon, e, data.time);
+		if (attitude != null) {
+			double alpha = attitude.getVelocity(1).getAlpha() + Math.PI / 2;
+			double gtcalib = data.heading + Math.PI - alpha;
+			yawCalib += gtcalib;
+		}
+		step = null;
+	}
+
 	@Override
 	public GeoPoint getGPS() {
 
@@ -320,7 +371,11 @@ class Vehicle implements Context {
 		if (state == NavigationState.GPS) {
 			return 0;
 		} else if (state == NavigationState.SLAM) {
-			return baroAltitude - lpBaro;
+			double r = baroAltitude - lpBaro;
+			if (Double.isNaN(r))
+				return 0;
+			else
+				return r;
 		}
 		return 0;
 	}

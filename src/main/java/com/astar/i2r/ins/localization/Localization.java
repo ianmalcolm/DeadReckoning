@@ -30,7 +30,7 @@ public class Localization extends Thread {
 	
 
 	public Localization(BlockingQueue<Data> _dataQ,
-			Map<Integer, Context> _cList, GeoMap map) {
+			Map<Integer, Context> _cList) {
 		dataQ = _dataQ;
 		cList = _cList;
 		Context car = new Vehicle();

@@ -23,6 +23,9 @@ public class Translator {
 		SENSORDATATYPE.put(BaroData.PATTERN, BaroData.class);
 		SENSORDATATYPE.put(CompassData.PATTERN, CompassData.class);
 		SENSORDATATYPE.put(CANData.PATTERN, CANData.class);
+		
+		// for debug purpose
+		SENSORDATATYPE.put(GroundTruth.PATTERN, GroundTruth.class);
 	}
 
 	public static Data translate(String line) {

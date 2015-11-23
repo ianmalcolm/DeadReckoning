@@ -10,7 +10,7 @@ public interface Context {
 
 	void incoming(Data data);
 
-	boolean isGPSOK();
+	State needStateSwitch();
 
 	boolean SLAMUpdate();
 

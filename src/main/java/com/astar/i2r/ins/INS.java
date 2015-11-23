@@ -93,14 +93,12 @@ public class INS {
 		cList = new HashMap<Integer, Context>();
 		dataQ = new LinkedBlockingQueue<Data>();
 
-		GeoMap map = new MapWrapper();
-
 		// Create TCP data server and request server
 		dSvr = new DataServer(dataQ);
-		rSvr = new RequestServer(cList, map);
+		rSvr = new RequestServer(cList);
 
 		// Create server side localization worker
-		lSvr = new Localization(dataQ, cList, map);
+		lSvr = new Localization(dataQ, cList);
 
 		// create server side GUI
 

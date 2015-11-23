@@ -14,9 +14,9 @@ public class MotionData extends Data {
 	public final double[] inversedCardan = { 0, 0, 0 };
 	public final double[] cardan = { 0, 0, 0 };
 	public final double[] rotationRate = { 0, 0, 0 };
-	public final double[] magnetic = { 0, 0, 0 };
-	public final double magneticAccuracy;
-	public final double[] heading = { 0, 0, 0 };
+//	public final double[] magnetic = { 0, 0, 0 };
+//	public final double magneticAccuracy;
+//	public final double[] heading = { 0, 0, 0 };
 
 	public MotionData(Element ele) {
 
@@ -37,14 +37,15 @@ public class MotionData extends Data {
 		rotationRate[0] = Double.parseDouble(ele.getChild("RotRatX").getText());
 		rotationRate[1] = Double.parseDouble(ele.getChild("RotRatY").getText());
 		rotationRate[2] = Double.parseDouble(ele.getChild("RotRatZ").getText());
-		magnetic[0] = Double.parseDouble(ele.getChild("MagX").getText());
-		magnetic[1] = Double.parseDouble(ele.getChild("MagY").getText());
-		magnetic[2] = Double.parseDouble(ele.getChild("MagZ").getText());
-		magneticAccuracy = Double.parseDouble(ele.getChild("MagAcc").getText());
+//		magnetic[0] = Double.parseDouble(ele.getChild("MagX").getText());
+//		magnetic[1] = Double.parseDouble(ele.getChild("MagY").getText());
+//		magnetic[2] = Double.parseDouble(ele.getChild("MagZ").getText());
+//		magneticAccuracy = Double.parseDouble(ele.getChild("MagAcc").getText());
 
 	}
 
-	public static final String REGEX = "^MTS:(.+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?),MA:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\\n";
+//	public static final String REGEX = "^MTS:(.+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?),MA:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\\n";
+	public static final String REGEX = "^MTS:(.+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public MotionData(Matcher m) {
@@ -64,12 +65,12 @@ public class MotionData extends Data {
 		rotationRate[0] = Double.parseDouble(m.group(14));
 		rotationRate[1] = Double.parseDouble(m.group(15));
 		rotationRate[2] = Double.parseDouble(m.group(16));
-		magnetic[0] = Double.parseDouble(m.group(17));
-		magnetic[1] = Double.parseDouble(m.group(18));
-		magnetic[2] = Double.parseDouble(m.group(19));
-		magneticAccuracy = Double.parseDouble(m.group(20));
-		heading[0] = Double.parseDouble(m.group(21));
-		heading[1] = Double.parseDouble(m.group(22));
-		heading[2] = Double.parseDouble(m.group(23));
+//		magnetic[0] = Double.parseDouble(m.group(17));
+//		magnetic[1] = Double.parseDouble(m.group(18));
+//		magnetic[2] = Double.parseDouble(m.group(19));
+//		magneticAccuracy = Double.parseDouble(m.group(20));
+//		heading[0] = Double.parseDouble(m.group(21));
+//		heading[1] = Double.parseDouble(m.group(22));
+//		heading[2] = Double.parseDouble(m.group(23));
 	}
 }

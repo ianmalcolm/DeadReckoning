@@ -40,36 +40,6 @@
 			<version>3.8.1</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>org.openstreetmap.osmosis</groupId> -->
-		<!-- <artifactId>osmosis-core</artifactId> -->
-		<!-- <version>0.43-RELEASE</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>org.openstreetmap.osmosis</groupId> -->
-		<!-- <artifactId>osmosis-xml</artifactId> -->
-		<!-- <version>0.43-RELEASE</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>org.openstreetmap.osmosis</groupId> -->
-		<!-- <artifactId>osmosis-dataset</artifactId> -->
-		<!-- <version>0.43-RELEASE</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>org.openstreetmap.osmosis</groupId> -->
-		<!-- <artifactId>osmosis-pbf</artifactId> -->
-		<!-- <version>0.43-RELEASE</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>org.openstreetmap.osmosis</groupId> -->
-		<!-- <artifactId>osmosis-tagfilter</artifactId> -->
-		<!-- <version>0.43-RELEASE</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>org.openstreetmap.osmosis</groupId> -->
-		<!-- <artifactId>osmosis-areafilter</artifactId> -->
-		<!-- <version>0.43-RELEASE</version> -->
-		<!-- </dependency> -->
 		<dependency>
 			<groupId>org.mapsforge</groupId>
 			<artifactId>mapsforge-core</artifactId>
@@ -120,26 +90,16 @@
 			<artifactId>gt-referencing</artifactId>
 			<version>14.0</version>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.geotools</groupId> -->
-<!-- 			<artifactId>gt-geometry</artifactId> -->
-<!-- 			<version>14.0</version> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.geotools</groupId> -->
+		<!-- <artifactId>gt-geometry</artifactId> -->
+		<!-- <version>14.0</version> -->
+		<!-- </dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.4</version>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>xuggle</groupId> -->
-		<!-- <artifactId>xuggle-xuggler</artifactId> -->
-		<!-- <version>5.4</version> -->
-		<!-- </dependency> -->
-		<!-- <dependency> -->
-		<!-- <groupId>com.googlecode.gstreamer-java</groupId> -->
-		<!-- <artifactId>gstreamer-java</artifactId> -->
-		<!-- <version>1.5</version> -->
-		<!-- </dependency> -->
 		<dependency>
 			<groupId>com.graphhopper</groupId>
 			<artifactId>graphhopper</artifactId>
@@ -171,6 +131,18 @@
 			<artifactId>jgrapht-core</artifactId>
 			<version>0.9.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-ext</artifactId>
+			<version>0.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.monkeysintown</groupId>
+			<artifactId>jgraphx</artifactId>
+			<version>3.3.1.1</version>
+		</dependency>
+
+
 	</dependencies>
 
 

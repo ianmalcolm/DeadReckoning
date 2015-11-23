@@ -400,7 +400,7 @@
     <member type='way' ref='-278' role='' />
     <member type='way' ref='-276' role='' />
     <member type='way' ref='-270' role='' />
-    <tag k='ele' v='-17' />
+    <tag k='ele' v='-18' />
     <tag k='image' v='AD-FP-B3.png' />
     <tag k='lowerright' v='1.2982332,103.7888869' />
     <tag k='name' v='B3' />
@@ -408,7 +408,7 @@
   </relation>
   <relation id='-288' action='modify' visible='true'>
     <member type='way' ref='-268' role='' />
-    <tag k='ele' v='-14' />
+    <tag k='ele' v='-15' />
     <tag k='image' v='AD-FP-B1.png' />
     <tag k='lowerright' v='1.2982332,103.7888869' />
     <tag k='name' v='B1' />
@@ -416,7 +416,7 @@
   </relation>
   <relation id='-286' action='modify' visible='true'>
     <member type='way' ref='-266' role='' />
-    <tag k='ele' v='0' />
+    <tag k='ele' v='-1' />
     <tag k='image' v='AD-FP-01.png' />
     <tag k='lowerright' v='1.2982332,103.7888869' />
     <tag k='name' v='Ground' />
@@ -433,7 +433,7 @@
     <member type='way' ref='-248' role='' />
     <member type='way' ref='-256' role='' />
     <member type='way' ref='-246' role='' />
-    <tag k='ele' v='-20' />
+    <tag k='ele' v='-21' />
     <tag k='image' v='AD-FP-B4.png' />
     <tag k='lowerright' v='1.2982332,103.7888869' />
     <tag k='name' v='B4' />
@@ -450,7 +450,7 @@
     <member type='way' ref='-244' role='' />
     <member type='way' ref='-226' role='' />
     <member type='way' ref='-228' role='' />
-    <tag k='ele' v='-23.5' />
+    <tag k='ele' v='-24.5' />
     <tag k='image' v='AD-FP-B5.png' />
     <tag k='lowerright' v='1.2982332,103.7888869' />
     <tag k='name' v='B5' />
@@ -467,7 +467,7 @@
     <member type='way' ref='-218' role='' />
     <member type='way' ref='-212' role='' />
     <member type='way' ref='-214' role='' />
-    <tag k='ele' v='-26.5' />
+    <tag k='ele' v='-27.5' />
     <tag k='image' v='AD-FP-B6.png' />
     <tag k='lowerright' v='1.2982332,103.7888869' />
     <tag k='name' v='B6' />

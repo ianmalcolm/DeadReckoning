@@ -6,22 +6,23 @@ public enum NavigationState implements State {
 
 	GPS {
 		public boolean process(Context context) {
-			if (context.isGPSOK()) {
+			State nextState = context.needStateSwitch();
+			if (nextState == null) {
 				context.GPSUpdate();
 			} else {
-				context.state(NavigationState.SLAM);
+				context.state(nextState);
 			}
 			return true;
 		}
 	},
 	SLAM {
 		public boolean process(Context context) {
-			if (context.isGPSOK()) {
-				context.GPSUpdate();
-				context.state(NavigationState.GPS);
-			} else {
+			State nextState = context.needStateSwitch();
+			if (nextState == null) {
 				context.SLAMUpdate();
 				context.localize();
+			} else {
+				context.state(nextState);
 			}
 			return true;
 		}

@@ -35,16 +35,14 @@ public class RequestServer extends Thread {
 	public static final String RQTMAPPRMT = "RQTMAPPRMT";
 	public static final String RQTLOC = "RQTLOC";
 
-	private GeoMap map = null;
 	private Map<Integer, Context> cList = null;
 	private ServerSocket rSockSvr = null;
 	public static final int PORT = 2001;
 
 	private static final Geocoder geocoder = new Geocoder();
 
-	public RequestServer(Map<Integer, Context> _cList, GeoMap _map) {
+	public RequestServer(Map<Integer, Context> _cList) {
 
-		map = _map;
 		cList = _cList;
 		try {
 			rSockSvr = new ServerSocket(PORT);
@@ -75,13 +73,16 @@ public class RequestServer extends Thread {
 
 				Context car = cList.get(INS.car0);
 
-				log.trace("Received: " + cmd);
+				log.trace("Received query from client: " + cmd);
 				if (cmd.contains(RQTGPS)) {
 					GeoPoint curPos = car.getGPS();
 					if (curPos == null) {
 						IOUtils.write("GPS coordinates Unknow.\n", dos);
+						log.trace("RQTGPS: GPS coordinates Unknow.");
 					} else {
 						IOUtils.write(car.getGPS().toString() + '\n', dos);
+						log.trace("RQTGPS: Sent gps to client : "
+								+ car.getGPS().toString());
 					}
 				} else if (cmd.contains(RQTMAPNAME)) {
 					String[] cmds = cmd.split(",");
@@ -96,28 +97,34 @@ public class RequestServer extends Thread {
 						if (gps != null && !Double.isNaN(relativeAltitude)) {
 							mname = CarParkDB.getMap(gps.lat, gps.lon,
 									relativeAltitude);
+						} else {
+							int i = 333 + 444;
 						}
 					}
 					IOUtils.write(mname + '\n', dos);
+					log.trace("RQTMAPNAME: Sent mapname to client: " + mname);
 				} else if (cmd.contains(RQTMAPPRMT)) {
 					String[] cmds = cmd.split(",");
 					double[] prmt = null;
 					if (cmds.length > 1) {
 						prmt = CarParkDB.getMapParameter(cmds[1]);
 					}
+					String ans = null;
 					if (prmt != null) {
-						IOUtils.write(prmt[0] + "," + prmt[1] + "," + prmt[2]
-								+ "," + prmt[3] + '\n', dos);
+						ans = prmt[0] + "," + prmt[1] + "," + prmt[2] + ","
+								+ prmt[3];
 					} else {
-						IOUtils.write("Unknown Map " + cmds[1] + '\n', dos);
+						ans = "Unknown Map " + cmds[1];
 					}
+					IOUtils.write(ans + '\n', dos);
+					log.trace("RQTMAPPRMT: Sent parameter to client: " + ans);
 				} else if (cmd.contains(RQTMAP)) {
 					String[] cmds = cmd.split(",");
 					if (cmds.length > 1) {
 						FileInputStream fis = new FileInputStream(cmds[1]);
 						int bytes = IOUtils.copy(fis, dos);
 						fis.close();
-						log.info("Server sent file " + cmds[1] + ", size "
+						log.info("RQTMAP: Sent filename " + cmds[1] + ", size "
 								+ bytes + " bytes.");
 					} else {
 						GeoPoint gps = car.getGPS();
@@ -128,7 +135,7 @@ public class RequestServer extends Thread {
 						FileInputStream fis = new FileInputStream(mname);
 						int bytes = IOUtils.copy(fis, dos);
 						fis.close();
-						log.info("Server sent file " + mname + ", size "
+						log.info("RQTMAP: Sent filename " + mname + ", size "
 								+ bytes + " bytes.");
 					}
 				} else if (cmd.contains(RQTLOC)) {
@@ -149,6 +156,7 @@ public class RequestServer extends Thread {
 						}
 					}
 					IOUtils.write(locationName + '\n', dos);
+					log.trace("RQTLOC: Sent location: " + locationName);
 				} else {
 					String invalid = "Invalid request!";
 					IOUtils.write(invalid + '\n', dos);

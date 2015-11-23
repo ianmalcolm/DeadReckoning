@@ -21,4 +21,8 @@ public class Node {
 		return GeoPoint.distance(new GeoPoint(p.lat, p.lon, p.ele),
 				new GeoPoint(q.lat, q.lon, q.ele));
 	}
+	
+	public String toString(){
+		return Integer.toString(id);
+	}
 }

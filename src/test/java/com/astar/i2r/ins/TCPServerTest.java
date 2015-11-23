@@ -33,7 +33,7 @@ public class TCPServerTest {
 
 		dSvr = new DataServer(null);
 		dSvr.start();
-		rSvr = new RequestServer(null,null);
+		rSvr = new RequestServer(null);
 		rSvr.start();
 	}
 

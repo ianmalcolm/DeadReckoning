@@ -2,6 +2,7 @@ package com.astar.i2r.ins.map;
 
 import java.awt.geom.Path2D;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -18,33 +19,16 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.xpath.XPathExpression;
 import org.jdom2.xpath.XPathFactory;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.ListenableDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 public class CarPark extends LinkedList<Storey> {
 	// the first element store the map of the highest altitude
-	private double altitude;
-	private String filename;
+
 	private String name;
-	private double rotation;
-	private double[] scale = new double[] { 0, 0 };
-	private double[] reference = new double[] { 0, 0 };
-	private Path2D boundary = new Path2D.Double();
-	private SimpleDirectedWeightedGraph<Node, DefaultWeightedEdge> graph;
 
-	// private Map<Integer, Node> nodes = new HashMap<Integer, Node>();
-
-	public CarPark(double alt, String fn, String n, double rot, double[] sc,
-			double[] ref, Path2D bb) {
-		altitude = alt;
-		filename = fn;
-		name = n;
-		rotation = rot;
-		for (int i = 0; i < scale.length; i++) {
-			scale[i] = sc[i];
-			reference[i] = ref[i];
-		}
-		boundary = bb;
-	}
+	public Path2D boundary = new Path2D.Double();
+	public ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge> graph;
 
 	public CarPark(String filename) {
 
@@ -63,51 +47,32 @@ public class CarPark extends LinkedList<Storey> {
 
 		addAll(storeies);
 
-		graph = new SimpleDirectedWeightedGraph<Node, DefaultWeightedEdge>(
-				DefaultWeightedEdge.class);
-		for (Way w : ways.values()) {
-			for (Node n : w) {
-				if (!graph.containsVertex(n)) {
-					graph.addVertex(n);
-				}
-			}
-			Node pren = w.getFirst();
-			for (Node curn : w) {
-				if (pren == curn) {
-					continue;
-				}
-				graph.addEdge(pren, curn);
-				if (!w.oneway) {
-					graph.addEdge(curn, pren);
-				}
-				pren = curn;
-			}
-		}
+		Collections.sort(this, Collections.reverseOrder());
+
+		graph = createGraph(ways);
+
 	}
 
 	public boolean inBound(double lat, double lon) {
 		return boundary.contains(lat, lon);
 	}
 
-	public double getAltitude() {
-		return altitude;
-	}
-
-	public String filename() {
-		return filename;
-	}
-
 	public String name() {
 		return name;
 	}
 
-	public double[] getMapParameter() {
-		double[] prmt = new double[4];
-		prmt[0] = scale[0];
-		prmt[1] = scale[1];
-		prmt[2] = reference[0];
-		prmt[3] = reference[1];
-		return prmt;
+	public String getMap(double alt) {
+		double preele = getFirst().ele;
+		for (Storey s : this) {
+			if (s.ele == preele && alt > s.ele) {
+				return s.image;
+			} else if (alt < preele && alt > s.ele) {
+				return s.image;
+			} else {
+				preele = s.ele;
+			}
+		}
+		return getLast().image;
 	}
 
 	public static Path2D getBBox(Document doc) {
@@ -144,9 +109,12 @@ public class CarPark extends LinkedList<Storey> {
 			} catch (DataConversionException e) {
 				e.printStackTrace();
 			}
-			path.moveTo(lat, lon);
+			if (path.getCurrentPoint() == null) {
+				path.moveTo(lat, lon);
+			}
 			path.lineTo(lat, lon);
 		}
+
 		return path;
 	}
 
@@ -262,5 +230,33 @@ public class CarPark extends LinkedList<Storey> {
 		}
 		return storeies;
 
+	}
+
+	public ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge> createGraph(
+			Map<Integer, Way> ways) {
+		ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge> g = new ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge>(
+				DefaultWeightedEdge.class);
+		for (Way w : ways.values()) {
+			for (Node n : w) {
+				if (!g.containsVertex(n)) {
+					g.addVertex(n);
+				}
+			}
+			Node pren = w.getFirst();
+			for (Node curn : w) {
+				if (pren == curn) {
+					continue;
+				}
+				double weight = Node.dist(pren, curn).getNorm();
+				g.addEdge(pren, curn);
+				g.setEdgeWeight(g.getEdge(pren, curn), weight);
+				if (!w.oneway) {
+					g.addEdge(curn, pren);
+					g.setEdgeWeight(g.getEdge(curn, pren), weight);
+				}
+				pren = curn;
+			}
+		}
+		return g;
 	}
 }
