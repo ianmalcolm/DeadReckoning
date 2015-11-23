@@ -11,7 +11,7 @@ import org.jdom2.input.SAXBuilder;
 import org.junit.Test;
 
 import com.astar.i2r.ins.map.CarPark;
-import com.astar.i2r.ins.map.Node;
+import com.astar.i2r.ins.map.GeoNode;
 
 public class XPathTest {
 
@@ -27,7 +27,7 @@ public class XPathTest {
 		}
 
 		Path2D box = CarPark.getBBox(doc);
-		Map<Integer, Node> nodes = CarPark.getNodes(doc);
+		Map<Integer, GeoNode> nodes = CarPark.getNodes(doc);
 		System.out.println(box.getBounds().toString());
 
 		System.out.println(nodes.size());
