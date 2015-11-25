@@ -48,7 +48,7 @@ public class Storey extends LinkedList<Way> implements Comparable<Storey> {
 		int height = bimg.getHeight();
 		prmt[0] = width / Math.abs(lowerright[1] - upperleft[1]);
 		prmt[1] = height / Math.abs(lowerright[0] - upperleft[0]);
-		;
+		
 		prmt[2] = upperleft[0];
 		prmt[3] = upperleft[1];
 		return prmt;

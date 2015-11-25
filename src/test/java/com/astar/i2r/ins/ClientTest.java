@@ -15,8 +15,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import com.astar.i2r.ins.gui.JxMap;
 
@@ -33,7 +31,7 @@ public class ClientTest {
 
 	}
 
-	public static void main(String[] argv) {
+	public static void main(String[] argv) throws IOException {
 
 		new ClientTest();
 
@@ -45,72 +43,74 @@ public class ClientTest {
 		// String sensorLogFileName = "sensor/1446089995.751188.txt";
 		// String sensorLogFileName = "sensor/1446090161.558128.txt";
 
-		// String sensorLogFileName = "sensor/1447040772.693506.txt";
+		String sensorLogFileName = "sensor/1447040772.693506.txt";
 
 		// String sensorLogFileName = "sensor/1444893828.912658-withGT.txt";
 		// String sensorLogFileName = "sensor/1446090536.171343-withGT.txt";
-		 String sensorLogFileName = "sensor/1447040772.693506-withGT.txt";
+		// String sensorLogFileName = "sensor/1447040772.693506-withGT.txt";
 
-		try {
-			Socket dataSock = new Socket("localhost", DataServer.PORT);
-			DataOutputStream dataOs = new DataOutputStream(
-					dataSock.getOutputStream());
-			BufferedReader dataBr = new BufferedReader(new FileReader(
-					sensorLogFileName));
-			String line;
+		Socket dataSock = null;
+		DataOutputStream dataOs = null;
+		BufferedReader dataBr = null;
 
-			int lineCnt = 0;
-			while ((line = dataBr.readLine()) != null) {
-				lineCnt++;
-				IOUtils.write(line + '\n', dataOs);
+		dataSock = new Socket("localhost", DataServer.PORT);
+		dataOs = new DataOutputStream(dataSock.getOutputStream());
+		dataBr = new BufferedReader(new FileReader(sensorLogFileName));
 
-				if (lineCnt % 100 == 0) {
+		String line = null;
+
+		int lineCnt = 0;
+		while ((line = dataBr.readLine()) != null) {
+			if (line.matches("^#.*$")) {
+				continue;
+			}
+			lineCnt++;
+			IOUtils.write(line + '\n', dataOs);
+
+			if (lineCnt % 100 == 0) {
+				try {
 					Thread.sleep(50);
-					String[] gps = query(RequestServer.RQTGPS).split(",");
-					String mapname = query(RequestServer.RQTMAPNAME);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				String[] gps = query(RequestServer.RQTGPS).split(",");
+				String mapname = query(RequestServer.RQTMAPNAME);
 
-					if (gps.length > 1) {
-						double lat = Double.parseDouble(gps[0]);
-						double lon = Double.parseDouble(gps[1]);
-						if (lastMap.compareTo(mapname) != 0) {
-							if (mapname.compareTo("") == 0) {
-								window.hideImage();
-							} else {
+				if (gps.length > 1) {
+					double lat = Double.parseDouble(gps[0]);
+					double lon = Double.parseDouble(gps[1]);
+					if (lastMap.compareTo(mapname) != 0) {
+						if (mapname.compareTo("") == 0) {
+							window.hideImage();
+						} else {
 
-								String[] prmt = query(
-										RequestServer.RQTMAPPRMT + ","
-												+ mapname).split(",");
-								double[] scale = new double[] {
+							String[] prmt = query(RequestServer.RQTMAPPRMT)
+									.split(",");
+							double[] scale = null;
+							double[] reference = null;
+							try {
+								scale = new double[] {
 										Double.parseDouble(prmt[0]),
 										Double.parseDouble(prmt[1]) };
-								double[] reference = new double[] {
-										Double.parseDouble(prmt[2]) - 0.000075,
-										Double.parseDouble(prmt[3]) - 0.000075 };
+								reference = new double[] {
+										Double.parseDouble(prmt[2]) - 0.000055,
+										Double.parseDouble(prmt[3]) - 0.000045 };
 								// Double.parseDouble(prmt[2]),
 								// Double.parseDouble(prmt[3]) };
-								window.dispImage(mapname, scale, reference);
+							} catch (NumberFormatException e) {
+								continue;
 							}
-							lastMap = mapname;
+							window.dispImage(mapname, scale, reference);
 						}
-						window.setAddressLocation(lat, lon);
+						lastMap = mapname;
 					}
+					window.setAddressLocation(lat, lon);
 				}
 			}
-
-			dataSock.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+
+		dataSock.close();
 
 	}
 

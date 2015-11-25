@@ -18,32 +18,13 @@ import org.jdom2.filter.Filters;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.xpath.XPathExpression;
 import org.jdom2.xpath.XPathFactory;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.ListenableDirectedWeightedGraph;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 public class CarPark extends LinkedList<Storey> {
 	// the first element store the map of the highest altitude
 
 	private String name;
-	private double rotation;
-	private double[] scale = new double[] { 0, 0 };
-	private double[] reference = new double[] { 0, 0 };
-	private Path2D boundary = new Path2D.Double();
-	private SimpleDirectedWeightedGraph<GeoNode, DefaultWeightedEdge> graph;
-
-	public CarPark(double alt, String fn, String n, double rot, double[] sc,
-			double[] ref, Path2D bb) {
-		altitude = alt;
-		filename = fn;
-		name = n;
-		rotation = rot;
-		for (int i = 0; i < scale.length; i++) {
-			scale[i] = sc[i];
-			reference[i] = ref[i];
-		}
-		boundary = bb;
-	}
+	private Path2D boundary;
+	private List<CalibrationBox> calibBoxes;
 
 	public CarPark(String filename) {
 
@@ -55,36 +36,88 @@ public class CarPark extends LinkedList<Storey> {
 			e.printStackTrace();
 		}
 
+		name = getName(doc);
 		boundary = getBBox(doc);
 		Map<Integer, GeoNode> nodes = getNodes(doc);
 		Map<Integer, Way> ways = getWays(doc, nodes);
 		List<Storey> storeies = getStoreies(doc, ways);
-
+		calibBoxes = getCalibBoxes(doc, nodes);
 		addAll(storeies);
-
-		graph = new SimpleDirectedWeightedGraph<GeoNode, DefaultWeightedEdge>(
-				DefaultWeightedEdge.class);
-		for (Way w : ways.values()) {
-			for (GeoNode n : w) {
-				if (!graph.containsVertex(n)) {
-					graph.addVertex(n);
-				}
-			}
-			GeoNode pren = w.getFirst();
-			for (GeoNode curn : w) {
-				if (pren == curn) {
-					continue;
-				}
-				graph.addEdge(pren, curn);
-				if (!w.oneway) {
-					graph.addEdge(curn, pren);
-				}
-				pren = curn;
-			}
-		}
+		Collections.sort(this, Collections.reverseOrder());
 	}
 
-		graph = createGraph(ways);
+	private static List<CalibrationBox> getCalibBoxes(Document doc,
+			Map<Integer, GeoNode> nodes) {
+		List<CalibrationBox> boxes = new LinkedList<CalibrationBox>();
+
+		XPathFactory xFactory = XPathFactory.instance();
+		XPathExpression<Element> exprElement = xFactory.compile("/osm/way"
+				+ "[@id]" + "[nd]" + "[tag/@k='area' and tag/@v='yes']"
+				+ "[tag/@k='headingCalibration']", Filters.element());
+		XPathExpression<Attribute> expnd = xFactory.compile("nd/@ref",
+				Filters.attribute());
+		XPathExpression<Attribute> expheading = xFactory.compile(
+				"tag[@k='headingCalibration']/@v", Filters.attribute());
+
+		List<Element> waysEle = exprElement.evaluate(doc);
+
+		for (Element wayEle : waysEle) {
+			Path2D path = new Path2D.Double();
+
+			List<Attribute> ndList = expnd.evaluate(wayEle);
+			for (Attribute ndAttr : ndList) {
+				try {
+					GeoNode n = nodes.get(ndAttr.getIntValue());
+					if (path.getCurrentPoint() == null) {
+						path.moveTo(n.lat, n.lon);
+					}
+					path.lineTo(n.lat, n.lon);
+				} catch (DataConversionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			double heading = 0;
+			try {
+				heading = expheading.evaluateFirst(wayEle).getDoubleValue();
+			} catch (DataConversionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			int wayId = 0;
+			try {
+				wayId = wayEle.getAttribute("id").getIntValue();
+			} catch (DataConversionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			XPathExpression<Attribute> expstorey = xFactory.compile(
+					"/osm/relation" + "[member/@type='way' and member/@ref='"
+							+ wayId + "']" + "[tag/@k='ele']"
+							+ "[tag/@k='image']" + "/tag[@k='name']/@v",
+					Filters.attribute());
+			String name = expstorey.evaluateFirst(doc).getValue();
+
+			CalibrationBox box = new CalibrationBox(path, heading, name);
+			boxes.add(box);
+		}
+
+		return boxes;
+
+	}
+
+	private static String getName(Document doc) {
+		XPathFactory xFactory = XPathFactory.instance();
+		XPathExpression<Attribute> exprAttribute = xFactory.compile(
+				"/osm/relation" + "[member]" + "[tag/@k='name' and tag/@v]"
+						+ "[tag/@k='type' and tag/@v='site']"
+						+ "[tag/@k='site' and tag/@v='parking']"
+						+ "/tag[@k='name']/@v", Filters.attribute());
+		String name = exprAttribute.evaluateFirst(doc).getValue();
+		return name;
 
 	}
 
@@ -96,21 +129,21 @@ public class CarPark extends LinkedList<Storey> {
 		return name;
 	}
 
-	public String getMap(double alt) {
+	public String getMapName(double alt) {
 		double preele = getFirst().ele;
 		for (Storey s : this) {
 			if (s.ele == preele && alt > s.ele) {
-				return s.image;
+				return s.name;
 			} else if (alt < preele && alt > s.ele) {
-				return s.image;
+				return s.name;
 			} else {
 				preele = s.ele;
 			}
 		}
-		return getLast().image;
+		return getLast().name;
 	}
 
-	public static Path2D getBBox(Document doc) {
+	private static Path2D getBBox(Document doc) {
 		List<Integer> ndIds = new LinkedList<Integer>();
 		XPathFactory xFactory = XPathFactory.instance();
 		XPathExpression<Attribute> exprAttribute = xFactory.compile(
@@ -153,7 +186,7 @@ public class CarPark extends LinkedList<Storey> {
 		return path;
 	}
 
-	public static Map<Integer, GeoNode> getNodes(Document doc) {
+	private static Map<Integer, GeoNode> getNodes(Document doc) {
 		Map<Integer, GeoNode> nList = new HashMap<Integer, GeoNode>();
 
 		XPathFactory xFactory = XPathFactory.instance();
@@ -177,7 +210,7 @@ public class CarPark extends LinkedList<Storey> {
 		return nList;
 	}
 
-	public static Map<Integer, Way> getWays(Document doc,
+	private static Map<Integer, Way> getWays(Document doc,
 			Map<Integer, GeoNode> nodes) {
 		Map<Integer, Way> ways = new HashMap<Integer, Way>();
 
@@ -215,11 +248,12 @@ public class CarPark extends LinkedList<Storey> {
 
 	}
 
-	public static List<Storey> getStoreies(Document doc, Map<Integer, Way> ways) {
+	private static List<Storey> getStoreies(Document doc, Map<Integer, Way> ways) {
 		List<Storey> storeies = new LinkedList<Storey>();
 		XPathFactory xFactory = XPathFactory.instance();
-		XPathExpression<Element> exprElement = xFactory.compile(
-				"/osm/relation[@id]", Filters.element());
+		XPathExpression<Element> exprElement = xFactory.compile("/osm/relation"
+				+ "[@id]" + "[tag/@k='ele']" + "[tag/@k='image']",
+				Filters.element());
 
 		XPathExpression<Attribute> expname = xFactory.compile(
 				"tag[@k='name']/@v", Filters.attribute());
@@ -267,31 +301,49 @@ public class CarPark extends LinkedList<Storey> {
 
 	}
 
-	public ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge> createGraph(
-			Map<Integer, Way> ways) {
-		ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge> g = new ListenableDirectedWeightedGraph<Node, DefaultWeightedEdge>(
-				DefaultWeightedEdge.class);
-		for (Way w : ways.values()) {
-			for (Node n : w) {
-				if (!g.containsVertex(n)) {
-					g.addVertex(n);
-				}
-			}
-			Node pren = w.getFirst();
-			for (Node curn : w) {
-				if (pren == curn) {
-					continue;
-				}
-				double weight = Node.dist(pren, curn).getNorm();
-				g.addEdge(pren, curn);
-				g.setEdgeWeight(g.getEdge(pren, curn), weight);
-				if (!w.oneway) {
-					g.addEdge(curn, pren);
-					g.setEdgeWeight(g.getEdge(curn, pren), weight);
-				}
-				pren = curn;
+	public double getCorrectHeading(double lat, double lon) {
+
+		for (CalibrationBox box : calibBoxes) {
+			if (box.inBound(lat, lon)) {
+				return box.heading;
 			}
 		}
-		return g;
+		return Double.NaN;
 	}
+
+	public double[] getMapParameter(String mapName) {
+
+		for (Storey s : this) {
+			if (s.name.compareTo(mapName) == 0) {
+				return s.getMapParameter();
+			}
+		}
+		return null;
+	}
+
+	public String getMapFileName(String mapName) {
+		for (Storey s : this) {
+			if (s.name.compareTo(mapName) == 0) {
+				return s.image;
+			}
+		}
+		return null;
+	}
+}
+
+class CalibrationBox {
+	final String storey;
+	final Path2D box;
+	final double heading;
+
+	CalibrationBox(Path2D p, double h, String n) {
+		box = p;
+		heading = h;
+		storey = n;
+	}
+
+	boolean inBound(double lat, double lon) {
+		return box.contains(lat, lon);
+	}
+
 }

@@ -17,8 +17,14 @@ public interface Context {
 	boolean localize();
 
 	boolean GPSUpdate();
-	
+
 	double getRelativeAltitude();
-	
+
 	GeoPoint getGPS();
+
+	String getMapName();
+
+	double[] getMapParameter();
+
+	String getMapFileName();
 }

@@ -8,15 +8,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import com.astar.i2r.ins.localization.Context;
-import com.astar.i2r.ins.map.CarParkDB;
-import com.astar.i2r.ins.map.GeoMap;
 import com.astar.i2r.ins.motion.GeoPoint;
 import com.google.code.geocoder.Geocoder;
 import com.google.code.geocoder.GeocoderRequestBuilder;
@@ -85,75 +82,41 @@ public class RequestServer extends Thread {
 								+ car.getGPS().toString());
 					}
 				} else if (cmd.contains(RQTMAPNAME)) {
-					String[] cmds = cmd.split(",");
-					String mname = null;
-					if (cmds.length > 3) {
-						mname = CarParkDB.getMap(Double.parseDouble(cmds[1]),
-								Double.parseDouble(cmds[2]),
-								Double.parseDouble(cmds[3]));
-					} else {
-						GeoPoint gps = car.getGPS();
-						double relativeAltitude = car.getRelativeAltitude();
-						if (gps != null && !Double.isNaN(relativeAltitude)) {
-							mname = CarParkDB.getMap(gps.lat, gps.lon,
-									relativeAltitude);
-						} else {
-							int i = 333 + 444;
-						}
+					String mapFileName = car.getMapFileName();
+					if (mapFileName == null) {
+						mapFileName = "";
 					}
-					IOUtils.write(mname + '\n', dos);
-					log.trace("RQTMAPNAME: Sent mapname to client: " + mname);
+					IOUtils.write(mapFileName + '\n', dos);
+					log.trace("RQTMAPNAME: Sent mapname to client: "
+							+ mapFileName);
 				} else if (cmd.contains(RQTMAPPRMT)) {
-					String[] cmds = cmd.split(",");
-					double[] prmt = null;
-					if (cmds.length > 1) {
-						prmt = CarParkDB.getMapParameter(cmds[1]);
-					}
+					double[] prmt = car.getMapParameter();
 					String ans = null;
 					if (prmt != null) {
 						ans = prmt[0] + "," + prmt[1] + "," + prmt[2] + ","
 								+ prmt[3];
 					} else {
-						ans = "Unknown Map " + cmds[1];
+						ans = "Unknown Map ";
 					}
 					IOUtils.write(ans + '\n', dos);
 					log.trace("RQTMAPPRMT: Sent parameter to client: " + ans);
 				} else if (cmd.contains(RQTMAP)) {
-					String[] cmds = cmd.split(",");
-					if (cmds.length > 1) {
-						FileInputStream fis = new FileInputStream(cmds[1]);
-						int bytes = IOUtils.copy(fis, dos);
-						fis.close();
-						log.info("RQTMAP: Sent filename " + cmds[1] + ", size "
-								+ bytes + " bytes.");
-					} else {
-						GeoPoint gps = car.getGPS();
-						double relativeAltitude = car.getRelativeAltitude();
-						String mname = CarParkDB.getMap(gps.lat, gps.lon,
-								relativeAltitude);
+					String mname = car.getMapFileName();
+					if (mname != null) {
 						dos.writeUTF(mname);
 						FileInputStream fis = new FileInputStream(mname);
 						int bytes = IOUtils.copy(fis, dos);
 						fis.close();
 						log.info("RQTMAP: Sent filename " + mname + ", size "
 								+ bytes + " bytes.");
+					} else {
+						log.info("RQTMAP: Fetch map failed");
 					}
 				} else if (cmd.contains(RQTLOC)) {
-					String[] cmds = cmd.split(",");
-					String locationName = null;
-					if (cmds.length > 2) {
-						locationName = getLocationName(
-								Double.parseDouble(cmds[1]),
-								Double.parseDouble(cmds[2]));
-						if (locationName == null) {
-							locationName = "Unknown location!";
-						}
-					} else {
-						GeoPoint gps = car.getGPS();
-						locationName = getLocationName(gps.lat, gps.lon);
-						if (locationName == null) {
-							locationName = "Unknown location!";
-						}
+					String locationName = getLocationName(car.getGPS().lat,
+							car.getGPS().lon);
+					if (locationName == null) {
+						locationName = "Unknown location!";
 					}
 					IOUtils.write(locationName + '\n', dos);
 					log.trace("RQTLOC: Sent location: " + locationName);

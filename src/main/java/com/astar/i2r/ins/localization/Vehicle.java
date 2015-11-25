@@ -1,6 +1,7 @@
 package com.astar.i2r.ins.localization;
 
 import java.util.Date;
+
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.log4j.Logger;
 
@@ -11,6 +12,8 @@ import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.data.GPSData;
 import com.astar.i2r.ins.data.GroundTruth;
 import com.astar.i2r.ins.data.MotionData;
+import com.astar.i2r.ins.map.CarPark;
+import com.astar.i2r.ins.map.CarParkDB;
 import com.astar.i2r.ins.motion.Attitude;
 import com.astar.i2r.ins.motion.GeoPoint;
 import com.astar.i2r.ins.motion.Speed;
@@ -24,7 +27,7 @@ class Vehicle implements Context {
 	private static double GPSCALIBACCURACYTHRESHOLD = 10;
 	private static double GPSCALIBDISTANCETHRESHOLD = 10;
 
-	private static double GPSOKTHRESHOLD = 15;
+	private static double GPSOKTHRESHOLD = 10;
 
 	private Attitude attitude = null;
 	private Speed speed = null;
@@ -33,11 +36,12 @@ class Vehicle implements Context {
 	private GeoPoint lastAccGPS = null;
 	private Vector3D GPSCalibVector = null;
 	// private double yawCalib = Double.NaN;
-	private double yawCalib = 2.32;
+	// private double yawCalib = 2.32;
+	private double yawCalib = 0;
 	private Step step = null;
 	private double baroAltitude = Double.NaN;
 	private double lpBaro = Double.NaN;
-
+	private CarPark curPark = null;
 	private State state = NavigationState.SLAM;
 
 	@Override
@@ -62,7 +66,6 @@ class Vehicle implements Context {
 			SLAMUpdate();
 		} else if (state == NavigationState.GPS) {
 			step = null;
-			lpBaro = baroAltitude;
 			GPSUpdate();
 		}
 
@@ -83,7 +86,8 @@ class Vehicle implements Context {
 		}
 
 		if (curPos != null) {
-			if (CarParkDB.isInBuilding(curPos.lat, curPos.lon)) {
+			curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
+			if (curPark != null) {
 				nextState = NavigationState.SLAM;
 			}
 		}
@@ -101,6 +105,32 @@ class Vehicle implements Context {
 		accuracy += data.accuracy[1] * data.accuracy[1];
 		accuracy = Math.sqrt(accuracy);
 		return accuracy < GPSOKTHRESHOLD;
+	}
+
+	public String getMapName() {
+		if (curPark == null) {
+			return null;
+		} else {
+			return curPark.getMapName(getRelativeAltitude());
+		}
+	}
+
+	public double[] getMapParameter() {
+		String mapName = getMapName();
+		if (mapName != null) {
+			return curPark.getMapParameter(mapName);
+		} else {
+			return null;
+		}
+	}
+
+	public String getMapFileName() {
+		String mapName = getMapName();
+		if (mapName != null) {
+			return curPark.getMapFileName(mapName);
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -175,7 +205,16 @@ class Vehicle implements Context {
 			// log.info("Step " + step.getNorm() + " at speed " +
 			// speed.speedms);
 			step = new Step(0, 0, 0, data.time);
-
+			if (curPark != null) {
+				double correctHeading = curPark.getCorrectHeading(curPos.lat,
+						curPos.lon);
+				if (!Double.isNaN(correctHeading)) {
+					double alpha = attitude.getVelocity(1).getAlpha() + Math.PI
+							/ 2;
+					double gtcalib = correctHeading + Math.PI - alpha;
+					yawCalib += gtcalib;
+				}
+			}
 		}
 	}
 
@@ -249,12 +288,7 @@ class Vehicle implements Context {
 
 	private void GPSUpdate(BaroData data) {
 		baroAltitude = data.altitude;
-		if (Double.isNaN(lpBaro)) {
-			lpBaro = baroAltitude;
-		} else {
-			double ratio = 49.0 / 50;
-			lpBaro = lpBaro * ratio + baroAltitude * (1 - ratio);
-		}
+		lpBaro = baroAltitude;
 	}
 
 	private void GPSUpdate(CANData data) {

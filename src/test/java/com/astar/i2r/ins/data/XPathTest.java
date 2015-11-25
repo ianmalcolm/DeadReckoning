@@ -18,19 +18,7 @@ public class XPathTest {
 	@Test
 	public void bboxtest() {
 
-		Document doc = null;
-		SAXBuilder builder = new SAXBuilder();
-		try {
-			doc = (Document) builder.build("map/Fusionopolis.osm");
-		} catch (JDOMException | IOException e) {
-			e.printStackTrace();
-		}
-
-		Path2D box = CarPark.getBBox(doc);
-		Map<Integer, GeoNode> nodes = CarPark.getNodes(doc);
-		System.out.println(box.getBounds().toString());
-
-		System.out.println(nodes.size());
+		CarPark park = new CarPark("map/Fusionopolis.osm");
 
 	}
 

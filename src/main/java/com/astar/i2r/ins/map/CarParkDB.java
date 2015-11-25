@@ -25,16 +25,6 @@ public class CarParkDB {
 		}
 	}
 
-	public static String getMap(double lat, double lon, double ele) {
-		for (CarPark park : carparks) {
-			if (park.inBound(lat, lon)) {
-				return park.getMap(ele);
-			}
-		}
-
-		return "";
-	}
-
 	public static double[] getMapParameter(String name) {
 
 		for (CarPark park : carparks) {
@@ -47,14 +37,14 @@ public class CarParkDB {
 		return null;
 	}
 
-	public static boolean isInBuilding(double lat, double lon) {
+	public static CarPark getCarPark(double lat, double lon) {
 		for (CarPark park : carparks) {
 			if (park.inBound(lat, lon)) {
-				return true;
+				return park;
 			}
 		}
 
-		return false;
+		return null;
 	}
 
 }
