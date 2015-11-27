@@ -10,9 +10,15 @@ public class CarParkDB {
 
 	static {
 
-		String filename = "map/Fusionopolis.osm";
-		CarPark cp = new CarPark(filename);
+		String filename = null;
+		CarPark cp = null;
+		
+		filename = "map/Fusionopolis.osm";
+		cp = new CarPark(filename);
+		carparks.add(cp);
 
+		filename = "map/Blk88A.osm";
+		cp = new CarPark(filename);
 		carparks.add(cp);
 	}
 

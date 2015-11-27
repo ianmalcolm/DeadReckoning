@@ -202,9 +202,8 @@ class Vehicle implements Context {
 		if (step.getNorm() > Step.MINSTEP) {
 			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
 			curPos = curPos.add(step);
-			// log.info("Step " + step.getNorm() + " at speed " +
-			// speed.speedms);
 			step = new Step(0, 0, 0, data.time);
+			
 			if (curPark != null) {
 				double correctHeading = curPark.getCorrectHeading(curPos.lat,
 						curPos.lon);
@@ -300,7 +299,7 @@ class Vehicle implements Context {
 		if (GPSCalibVector != null) {
 			double newCalib = getGPSCalibFactor(GPSCalibVector, data.cardan[2]);
 
-			if (Double.isNaN(yawCalib)) {
+			if (yawCalib == 0) {
 				yawCalib = newCalib;
 			} else {
 				yawCalib = angleAverage(yawCalib, newCalib, 3.0 / 4);

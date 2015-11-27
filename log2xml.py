@@ -22,7 +22,7 @@ Sensors		= {	MAG	:	re.compile(r'^ATS:(\d+?),MX:(.+?),MY:(.+?),MZ:(.+?)\n'),
 				GPS	:	re.compile(r'^GTS:(\d+?),GPA:(.+?),GPO:(.+?),GPH:(.+?),GPV:(.+?),GPS:(.+?)\n'),
 				MOT	:	re.compile(r'^MTS:(\d+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?),MA:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\n'),
 				COM	:	re.compile(r'^HTS:(\d+?),MD:(.+?),RH:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\n'),
-				CAN	:	re.compile(r'^CAN:(\d+?),.+41 0D (..)\s*?\n'),
+				CAN	:	re.compile(r'^CAN:(\d+?),.+41 0D (..).*?\n'),
 				BAR	:	re.compile(r'^LTS:(.+?),AR:(.+?),PV:(.+?)\n')
 }
 

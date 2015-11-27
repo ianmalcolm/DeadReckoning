@@ -43,7 +43,10 @@ public class ClientTest {
 		// String sensorLogFileName = "sensor/1446089995.751188.txt";
 		// String sensorLogFileName = "sensor/1446090161.558128.txt";
 
-		String sensorLogFileName = "sensor/1447040772.693506.txt";
+//		String sensorLogFileName = "sensor/1447040772.693506.txt";
+		String sensorLogFileName = "sensor/1448511685.792016.txt";
+//		String sensorLogFileName = "sensor/1448514394.581292.txt";
+		
 
 		// String sensorLogFileName = "sensor/1444893828.912658-withGT.txt";
 		// String sensorLogFileName = "sensor/1446090536.171343-withGT.txt";

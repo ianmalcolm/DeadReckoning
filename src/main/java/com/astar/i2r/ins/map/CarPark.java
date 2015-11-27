@@ -110,13 +110,22 @@ public class CarPark extends LinkedList<Storey> {
 	}
 
 	private static String getName(Document doc) {
+
 		XPathFactory xFactory = XPathFactory.instance();
 		XPathExpression<Attribute> exprAttribute = xFactory.compile(
 				"/osm/relation" + "[member]" + "[tag/@k='name' and tag/@v]"
 						+ "[tag/@k='type' and tag/@v='site']"
 						+ "[tag/@k='site' and tag/@v='parking']"
 						+ "/tag[@k='name']/@v", Filters.attribute());
-		String name = exprAttribute.evaluateFirst(doc).getValue();
+		Attribute nameAttribute = exprAttribute.evaluateFirst(doc);
+		if (nameAttribute == null) {
+			exprAttribute = xFactory
+					.compile(
+							"/osm/way[tag/@k='amenity' and tag/@v='parking']/tag[@k='name']/@v",
+							Filters.attribute());
+			nameAttribute = exprAttribute.evaluateFirst(doc);
+		}
+		String name = nameAttribute.getValue();
 		return name;
 
 	}
