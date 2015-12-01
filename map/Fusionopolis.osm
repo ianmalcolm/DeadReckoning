@@ -375,7 +375,7 @@
     <member type='way' ref='-242' role='' />
     <member type='way' ref='-240' role='' />
     <member type='way' ref='-234' role='' />
-    <tag k='ele' v='-18.76' />
+    <tag k='ele' v='-18.96' />
     <tag k='image' v='AD-FP-B3.png' />
     <tag k='lowerright' v='1.2980945,103.7891387' />
     <tag k='name' v='B3' />
@@ -383,7 +383,7 @@
   </relation>
   <relation id='-254' action='modify' visible='true'>
     <member type='way' ref='-232' role='' />
-    <tag k='ele' v='-16.86' />
+    <tag k='ele' v='-17.06' />
     <tag k='image' v='AD-FP-B1.png' />
     <tag k='lowerright' v='1.2980945,103.7891387' />
     <tag k='name' v='B1' />
@@ -392,7 +392,7 @@
   <relation id='-252' action='modify' visible='true'>
     <member type='way' ref='-166' role='' />
     <member type='way' ref='-230' role='' />
-    <tag k='ele' v='-3.72' />
+    <tag k='ele' v='-3.92' />
     <tag k='image' v='AD-FP-01.png' />
     <tag k='lowerright' v='1.2980945,103.7891387' />
     <tag k='name' v='Ground' />
@@ -409,7 +409,7 @@
     <member type='way' ref='-212' role='' />
     <member type='way' ref='-220' role='' />
     <member type='way' ref='-210' role='' />
-    <tag k='ele' v='-21.76' />
+    <tag k='ele' v='-21.96' />
     <tag k='image' v='AD-FP-B4.png' />
     <tag k='lowerright' v='1.2980945,103.7891387' />
     <tag k='name' v='B4' />
@@ -426,7 +426,7 @@
     <member type='way' ref='-208' role='' />
     <member type='way' ref='-190' role='' />
     <member type='way' ref='-192' role='' />
-    <tag k='ele' v='-24.96' />
+    <tag k='ele' v='-25.16' />
     <tag k='image' v='AD-FP-B5.png' />
     <tag k='lowerright' v='1.2980945,103.7891387' />
     <tag k='name' v='B5' />
@@ -443,7 +443,7 @@
     <member type='way' ref='-182' role='' />
     <member type='way' ref='-176' role='' />
     <member type='way' ref='-178' role='' />
-    <tag k='ele' v='-28.16' />
+    <tag k='ele' v='-28.36' />
     <tag k='image' v='AD-FP-B6.png' />
     <tag k='lowerright' v='1.2980945,103.7891387' />
     <tag k='name' v='B6' />

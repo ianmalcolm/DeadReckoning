@@ -11,7 +11,7 @@ import com.graphhopper.util.GPXEntry;
 
 public class Step extends Vector3D {
 
-	public static final double MINSTEP = 5;
+	public static final double MINSTEP = 1;
 
 	Date time = new Date();
 
