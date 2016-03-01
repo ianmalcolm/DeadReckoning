@@ -1,5 +1,7 @@
 package com.astar.i2r.ins;
 
+import java.awt.EventQueue;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -18,11 +20,13 @@ import org.mapsforge.map.reader.ReadBuffer;
 import org.opencv.core.Core;
 
 import com.astar.i2r.ins.data.Data;
+import com.astar.i2r.ins.gui.JxMap;
 import com.astar.i2r.ins.gui.MainFrame;
 import com.astar.i2r.ins.localization.Context;
 import com.astar.i2r.ins.localization.Localization;
 import com.astar.i2r.ins.map.MapWrapper;
 import com.astar.i2r.ins.map.GeoMap;
+import com.astar.i2r.ins.motion.GeoPoint;
 
 /**
  * Hello world!
@@ -33,13 +37,14 @@ public class INS {
 	private static final Logger log = Logger.getLogger(INS.class.getName());
 
 	public static final int car0 = 0;
-	
+
 	// data queue
 	private BlockingQueue<Data> dataQ = null;
+	private BlockingQueue<GeoPoint> GPSQ = null;
+
 	private Thread dSvr = null;
-	private Thread rSvr = null;
 	private Thread lSvr = null;
-	private Map<Integer, Context> cList = null;
+	private Thread mSvr = null;
 
 	/**
 	 * Starts the {@code MapViewer}.
@@ -56,7 +61,17 @@ public class INS {
 
 		String mapFiles = null;
 		String vdoFile = null;
-		String imuFile = null;
+
+		// String imuFile = "sensor/1446089995.751188.txt";
+		// String imuFile = "sensor/1446090161.558128.txt";
+
+		String imuFile = "sensor/1447040772.693506.txt";
+		// String imuFile = "sensor/1448511685.792016.txt";
+		// String imuFile = "sensor/1448514394.581292.txt";
+
+		// String imuFile = "sensor/1444893828.912658-withGT.txt";
+		// String imuFile = "sensor/1446090536.171343-withGT.txt";
+		// String imuFile = "sensor/1447040772.693506-withGT.txt";
 
 		Options options = new Options();
 		options.addOption("h", "help", false, "show help.");
@@ -86,25 +101,28 @@ public class INS {
 			help(options);
 		}
 
+		INS ins = new INS(new File(imuFile));
+
 	}
 
-	public INS() {
+	public INS(File imu) {
 
-		cList = new HashMap<Integer, Context>();
 		dataQ = new LinkedBlockingQueue<Data>();
+		GPSQ = new LinkedBlockingQueue<GeoPoint>();
 
-		// Create TCP data server and request server
-		dSvr = new DataServer(dataQ);
-		rSvr = new RequestServer(cList);
-
-		// Create server side localization worker
-		lSvr = new Localization(dataQ, cList);
-
-		// create server side GUI
+		TXTReader reader = new TXTReader(imu, dataQ);
+		Localization local = new Localization(dataQ, GPSQ);
+		JxMap window = new JxMap(GPSQ);
+		
+		dSvr = new Thread(reader);
+		lSvr = new Thread(local);
+		mSvr = new Thread(window);
 
 		dSvr.start();
-		rSvr.start();
 		lSvr.start();
+		mSvr.start();
+		EventQueue.invokeLater(window);
+
 	}
 
 	private static void help(Options options) {
@@ -116,26 +134,4 @@ public class INS {
 
 	}
 
-}
-
-class MyWindow implements Runnable {
-
-	private String mapFiles = null;
-	private String vdoFile = null;
-	private String imuFile = null;
-
-	public MyWindow(String _mapFiles, String _vdoFile, String _imuFile) {
-		mapFiles = _mapFiles;
-		vdoFile = _vdoFile;
-		imuFile = _imuFile;
-	}
-
-	public void run() {
-		try {
-			MainFrame frame = new MainFrame(mapFiles, vdoFile, imuFile);
-			frame.setVisible(true);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }

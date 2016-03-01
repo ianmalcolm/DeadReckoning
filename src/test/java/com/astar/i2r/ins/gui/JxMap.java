@@ -4,12 +4,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -17,18 +15,16 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JToolTip;
 
+import org.apache.log4j.Logger;
 import org.jxmapviewer.JXMapKit;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
@@ -45,13 +41,20 @@ import com.astar.i2r.ins.motion.GeoPoint;
  */
 public class JxMap extends JFrame implements Runnable {
 
+	/**
+	 * 
+	 */
+	private static final Logger log = Logger.getLogger(JxMap.class.getName());
+	private static final long serialVersionUID = 1L;
 	private final JXMapKit jXMapKit = new JXMapKit();
 	private final static String imagePath = "map/";
+	private final BlockingQueue<GeoPoint> GPSQ;
 	private String curImageStr = null;
 	private MyLabel picLabel = new MyLabel();
 
-	public JxMap() {
+	public JxMap(BlockingQueue<GeoPoint> _GPSQ) {
 
+		GPSQ = _GPSQ;
 		TileFactoryInfo info = new OSMTileFactoryInfo();
 		DefaultTileFactory tileFactory = new DefaultTileFactory(info);
 		jXMapKit.setTileFactory(tileFactory);
@@ -111,13 +114,23 @@ public class JxMap extends JFrame implements Runnable {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-
+		while (true) {
+			GeoPoint gp = null;
+			try {
+				gp = GPSQ.take();
+				log.trace("Receive " + gp.lat + "," + gp.lon + " at "
+						+ gp.time.toString());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			picLabel.setMarker(gp.lat, gp.lon);
+		}
 	}
 
 	public void setAddressLocation(double lat, double lon) {
 		if (getContentPane().isAncestorOf(jXMapKit)) {
-//			picLabel.clearMarker();
+			// picLabel.clearMarker();
 			jXMapKit.setAddressLocation(new GeoPosition(lat, lon));
 		} else if (getContentPane().isAncestorOf(picLabel)) {
 			picLabel.setMarker(lat, lon);
@@ -138,7 +151,7 @@ public class JxMap extends JFrame implements Runnable {
 		if (!getContentPane().isAncestorOf(picLabel)) {
 			getContentPane().add(picLabel);
 		}
-		picLabel.setImage(imagePath + curImageStr,_s,_r);
+		picLabel.setImage(imagePath + curImageStr, _s, _r);
 
 	}
 
@@ -157,6 +170,10 @@ public class JxMap extends JFrame implements Runnable {
 
 class MyLabel extends JLabel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private double[] scale = { 3111798, 3112660 };
 	private double[] reference = { 1.3004187, 103.7864650 };
 

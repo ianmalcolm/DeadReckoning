@@ -15,11 +15,11 @@ public enum NavigationState implements State {
 			return true;
 		}
 	},
-	SLAM {
+	DR {
 		public boolean process(Context context) {
 			State nextState = context.needStateSwitch();
 			if (nextState == null) {
-				context.SLAMUpdate();
+				context.DRUpdate();
 				context.localize();
 			} else {
 				context.state(nextState);

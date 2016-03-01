@@ -42,7 +42,7 @@ class Vehicle implements Context {
 	private double baroAltitude = Double.NaN;
 	private double lpBaro = Double.NaN;
 	private CarPark curPark = null;
-	private State state = NavigationState.SLAM;
+	private State state = NavigationState.DR;
 
 	@Override
 	public State state() {
@@ -61,9 +61,9 @@ class Vehicle implements Context {
 		assert nextState != state;
 		state = nextState;
 
-		if (state == NavigationState.SLAM) {
+		if (state == NavigationState.DR) {
 			step = new Step(0, 0, 0, curData.time);
-			SLAMUpdate();
+			DRUpdate();
 		} else if (state == NavigationState.GPS) {
 			step = null;
 			GPSUpdate();
@@ -81,14 +81,14 @@ class Vehicle implements Context {
 			if (isGPSOK(((GPSData) curData))) {
 				nextState = NavigationState.GPS;
 			} else {
-				nextState = NavigationState.SLAM;
+				nextState = NavigationState.DR;
 			}
 		}
 
 		if (curPos != null) {
 			curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
 			if (curPark != null) {
-				nextState = NavigationState.SLAM;
+				nextState = NavigationState.DR;
 			}
 		}
 
@@ -134,26 +134,26 @@ class Vehicle implements Context {
 	}
 
 	@Override
-	public boolean SLAMUpdate() {
+	public boolean DRUpdate() {
 
 		if (curData instanceof CANData) {
-			SLAMUpdate(((CANData) curData));
+			DRUpdate(((CANData) curData));
 		} else if (curData instanceof MotionData) {
-			SLAMUpdate(((MotionData) curData));
+			DRUpdate(((MotionData) curData));
 		} else if (curData instanceof CompassData) {
-			SLAMUpdate(((CompassData) curData));
+			DRUpdate(((CompassData) curData));
 		} else if (curData instanceof BaroData) {
-			SLAMUpdate(((BaroData) curData));
+			DRUpdate(((BaroData) curData));
 		} else if (curData instanceof GPSData) {
-			SLAMUpdate(((GPSData) curData));
+			DRUpdate(((GPSData) curData));
 		} else if (curData instanceof GroundTruth) {
-			SLAMUpdate(((GroundTruth) curData));
+			DRUpdate(((GroundTruth) curData));
 		}
 
 		return true;
 	}
 
-	private void SLAMUpdate(CANData data) {
+	private void DRUpdate(CANData data) {
 		speed = new Speed(data.vehSpdkmh / 3.6, data.time);
 
 		if (attitude == null) {
@@ -179,7 +179,7 @@ class Vehicle implements Context {
 		}
 	}
 
-	private void SLAMUpdate(MotionData data) {
+	private void DRUpdate(MotionData data) {
 
 		attitude = new Attitude(data.cardan, yawCalib, data.time);
 
@@ -217,21 +217,21 @@ class Vehicle implements Context {
 		}
 	}
 
-	private void SLAMUpdate(CompassData data) {
+	private void DRUpdate(CompassData data) {
 	}
 
-	private void SLAMUpdate(GPSData data) {
-		// GPS data in SLAM mode?
+	private void DRUpdate(GPSData data) {
+		// No valid GPS data in DR mode
 	}
 
-	private void SLAMUpdate(BaroData data) {
+	private void DRUpdate(BaroData data) {
 		baroAltitude = data.altitude;
 		if (Double.isNaN(lpBaro)) {
 			lpBaro = data.altitude;
 		}
 	}
 
-	private void SLAMUpdate(GroundTruth data) {
+	private void DRUpdate(GroundTruth data) {
 
 		double e = 0;
 		if (curPos != null) {
@@ -400,7 +400,7 @@ class Vehicle implements Context {
 	public double getRelativeAltitude() {
 		if (state == NavigationState.GPS) {
 			return 0;
-		} else if (state == NavigationState.SLAM) {
+		} else if (state == NavigationState.DR) {
 			double r = baroAltitude - lpBaro;
 			if (Double.isNaN(r))
 				return 0;

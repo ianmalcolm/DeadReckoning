@@ -12,7 +12,7 @@ public interface Context {
 
 	State needStateSwitch();
 
-	boolean SLAMUpdate();
+	boolean DRUpdate();
 
 	boolean localize();
 
