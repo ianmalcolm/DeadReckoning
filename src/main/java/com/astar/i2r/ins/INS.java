@@ -2,8 +2,6 @@ package com.astar.i2r.ins;
 
 import java.awt.EventQueue;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -17,15 +15,10 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 //import org.gstreamer.Gst;
 import org.mapsforge.map.reader.ReadBuffer;
-import org.opencv.core.Core;
 
 import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.gui.JxMap;
-import com.astar.i2r.ins.gui.MainFrame;
-import com.astar.i2r.ins.localization.Context;
 import com.astar.i2r.ins.localization.Localization;
-import com.astar.i2r.ins.map.MapWrapper;
-import com.astar.i2r.ins.map.GeoMap;
 import com.astar.i2r.ins.motion.GeoPoint;
 
 /**
@@ -54,7 +47,6 @@ public class INS {
 	 *            parameters.
 	 */
 	public static void main(String[] args) {
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		// args = Gst.init("Inertial Navigation", args);
 		// Increase read buffer limit
 		ReadBuffer.setMaximumBufferSize(6500000);
@@ -112,16 +104,16 @@ public class INS {
 
 		TXTReader reader = new TXTReader(imu, dataQ);
 		Localization local = new Localization(dataQ, GPSQ);
-		JxMap window = new JxMap(GPSQ);
-		
+//		JxMap window = new JxMap(GPSQ);
+
 		dSvr = new Thread(reader);
 		lSvr = new Thread(local);
-		mSvr = new Thread(window);
+//		mSvr = new Thread(window);
 
 		dSvr.start();
 		lSvr.start();
-		mSvr.start();
-		EventQueue.invokeLater(window);
+//		mSvr.start();
+//		EventQueue.invokeLater(window);
 
 	}
 

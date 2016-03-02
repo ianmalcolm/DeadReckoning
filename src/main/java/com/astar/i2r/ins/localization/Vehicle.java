@@ -44,16 +44,6 @@ class Vehicle implements Context {
 	private CarPark curPark = null;
 	private State state = NavigationState.DR;
 
-	@Override
-	public State state() {
-		return state;
-	}
-
-	@Override
-	public void incoming(Data data) {
-		curData = data;
-	}
-
 	// set the next state of a vehicle
 	@Override
 	public void state(State nextState) {
@@ -203,7 +193,7 @@ class Vehicle implements Context {
 			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
 			curPos = curPos.add(step);
 			step = new Step(0, 0, 0, data.time);
-			
+
 			if (curPark != null) {
 				double correctHeading = curPark.getCorrectHeading(curPos.lat,
 						curPos.lon);
@@ -408,6 +398,12 @@ class Vehicle implements Context {
 				return r;
 		}
 		return 0;
+	}
+
+	@Override
+	public void process(Data data) {
+		curData = data;
+		state.process(this);
 	}
 
 }

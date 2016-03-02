@@ -4,11 +4,10 @@ import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.motion.GeoPoint;
 
 public interface Context {
-	State state();
 
 	void state(State state);
 
-	void incoming(Data data);
+	void process(Data data);
 
 	State needStateSwitch();
 
@@ -27,4 +26,5 @@ public interface Context {
 	double[] getMapParameter();
 
 	String getMapFileName();
+
 }

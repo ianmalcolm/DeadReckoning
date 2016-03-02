@@ -22,7 +22,7 @@ public class Localization implements Runnable {
 		GPSQ = _GPSQ;
 
 	}
-	
+
 	@Override
 	public void run() {
 		while (true) {
@@ -38,10 +38,14 @@ public class Localization implements Runnable {
 
 			assert data != null;
 
-			car.incoming(data);
-			car.state().process(car);
-			
-			GPSQ.add(car.getGPS());
+			car.process(data);
+
+			GeoPoint coordinate = car.getGPS();
+			if (coordinate != null) {
+				System.out.println(coordinate.toString());
+				// GPSQ.add(car.getGPS());
+			}
+
 		}
 	}
 }
