@@ -15,24 +15,32 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JToolTip;
+import javax.swing.SwingWorker;
 
 import org.apache.log4j.Logger;
 import org.jxmapviewer.JXMapKit;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.painter.Painter;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
+import org.jxmapviewer.viewer.WaypointPainter;
 
 import com.astar.i2r.ins.motion.GeoPoint;
+import com.astar.i2r.ins.motion.Step;
 
 /**
  * A simple sample application that uses JXMapKit
@@ -49,18 +57,22 @@ public class JxMap extends JFrame implements Runnable {
 	private final JXMapKit jXMapKit = new JXMapKit();
 	private final static String imagePath = "map/";
 	private final BlockingQueue<GeoPoint> GPSQ;
+	private final BlockingQueue<GeoPoint> DRQ;
 	private String curImageStr = null;
 	private MyLabel picLabel = new MyLabel();
+	private WaypointPainter<ColoredWeightedWaypoint> waypointPainter = null;
+	private Set<ColoredWeightedWaypoint> waypoints = new HashSet<ColoredWeightedWaypoint>();
 
-	public JxMap(BlockingQueue<GeoPoint> _GPSQ) {
+	private GeoPoint lastWP = null;
+
+	public JxMap(BlockingQueue<GeoPoint> _GPSQ, BlockingQueue<GeoPoint> _DRQ) {
 
 		GPSQ = _GPSQ;
+		DRQ = _DRQ;
+
 		TileFactoryInfo info = new OSMTileFactoryInfo();
 		DefaultTileFactory tileFactory = new DefaultTileFactory(info);
 		jXMapKit.setTileFactory(tileFactory);
-
-		// location of Java
-		final GeoPosition gp = new GeoPosition(1.299643, 103.787948);
 
 		final JToolTip tooltip = new JToolTip();
 		tooltip.setTipText("Java");
@@ -68,15 +80,16 @@ public class JxMap extends JFrame implements Runnable {
 		jXMapKit.getMainMap().add(tooltip);
 
 		jXMapKit.setZoom(1);
+
+		// location of Java
+		final GeoPosition gp = new GeoPosition(1.299643, 103.787948);
 		jXMapKit.setAddressLocation(gp);
 
 		jXMapKit.getMainMap().addMouseMotionListener(new MouseMotionListener() {
-			@Override
 			public void mouseDragged(MouseEvent e) {
 				// ignore
 			}
 
-			@Override
 			public void mouseMoved(MouseEvent e) {
 				JXMapViewer map = jXMapKit.getMainMap();
 
@@ -102,30 +115,126 @@ public class JxMap extends JFrame implements Runnable {
 			}
 		});
 
+		waypointPainter = new WaypointPainter<ColoredWeightedWaypoint>();
+		waypointPainter.setRenderer(new ColoredWeightedWaypointRenderer());
+
+		// There can be many painter for a map
+		List<Painter<JXMapViewer>> painters = new ArrayList<Painter<JXMapViewer>>();
+		painters.add(waypointPainter);
+
+		CompoundPainter<JXMapViewer> painter = new CompoundPainter<JXMapViewer>(
+				painters);
+
+		jXMapKit.getMainMap().setOverlayPainter(painter);
+
 		// Display the viewer in a JFrame
 
 		setTitle("JXMapviewer2 Example 6");
 		getContentPane().add(jXMapKit);
 		setSize(800, 600);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		// setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
 		setVisible(true);
+
+		SwingWorker GPSworker = new SwingWorker<Void, ColoredWeightedWaypoint>() {
+			@Override
+			public Void doInBackground() {
+				GeoPoint coordinate = null;
+
+				while (true) {
+					try {
+						coordinate = GPSQ.take();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					if (coordinate != null) {
+						if (lastWP == null) {
+							lastWP = coordinate;
+							publish(new ColoredParticle(coordinate));
+						} else {
+							if (GeoPoint.distance(lastWP, coordinate).getNorm() > Step.MINSTEP * 10) {
+								publish(new ColoredParticle(coordinate));
+								lastWP = coordinate;
+							}
+						}
+					}
+				}
+			}
+
+			@Override
+			protected void process(List<ColoredWeightedWaypoint> wps) {
+				for (ColoredWeightedWaypoint wp : wps) {
+					waypoints.add(wp);
+					System.out.println(waypoints.size() + "\t"
+							+ wp.getPosition().toString());
+				}
+				setWaypoints(waypoints);
+			}
+		};
+
+		SwingWorker DRworker = new SwingWorker<Void, ColoredWeightedWaypoint>() {
+			@Override
+			public Void doInBackground() {
+				GeoPoint coordinate = null;
+
+				while (true) {
+					try {
+						coordinate = DRQ.take();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					if (coordinate != null) {
+						if (lastWP == null) {
+							lastWP = coordinate;
+							publish(new ColoredParticle(coordinate.lat,
+									coordinate.lon,
+									ColoredParticle.DEFAULTWEIGHT, Color.BLUE));
+						} else {
+							if (GeoPoint.distance(lastWP, coordinate).getNorm() > Step.MINSTEP * 10) {
+								publish(new ColoredParticle(coordinate.lat,
+										coordinate.lon,
+										ColoredParticle.DEFAULTWEIGHT,
+										Color.BLUE));
+								lastWP = coordinate;
+							}
+						}
+					}
+				}
+			}
+
+			@Override
+			protected void process(List<ColoredWeightedWaypoint> wps) {
+				for (ColoredWeightedWaypoint wp : wps) {
+					waypoints.add(wp);
+					System.out.println(waypoints.size() + "\t"
+							+ wp.getPosition().toString());
+				}
+				setWaypoints(waypoints);
+			}
+		};
+
+		GPSworker.execute();
+		DRworker.execute();
+
 	}
 
-	@Override
+	public void setWaypoints(Set<ColoredWeightedWaypoint> _waypoints) {
+		waypointPainter.setWaypoints(_waypoints);
+		jXMapKit.repaint();
+	}
+
+	public void setWaypoints() {
+		setWaypoints(new HashSet<ColoredWeightedWaypoint>());
+		jXMapKit.repaint();
+	}
+
 	public void run() {
-		while (true) {
-			GeoPoint gp = null;
-			try {
-				gp = GPSQ.take();
-				log.trace("Receive " + gp.lat + "," + gp.lon + " at "
-						+ gp.time.toString());
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			picLabel.setMarker(gp.lat, gp.lon);
-		}
+
 	}
 
 	public void setAddressLocation(double lat, double lon) {
@@ -202,7 +311,6 @@ class MyLabel extends JLabel {
 				iconRatio = Double.NaN;
 			}
 		});
-
 	}
 
 	@Override

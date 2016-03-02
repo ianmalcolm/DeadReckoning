@@ -27,7 +27,7 @@ public class CompassData extends Data {
 
 	}
 
-	public static final String REGEX = "^HTS:(\\d+?),MD:(.+?),RH:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\\n";
+	public static final String REGEX = "^HTS:(\\d+),MD:([\\d.-]+),RH:([\\d.-]+),HX:([\\d.-]+),HY:([\\d.-]+),HZ:([\\d.-]+)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public CompassData(Matcher m) {

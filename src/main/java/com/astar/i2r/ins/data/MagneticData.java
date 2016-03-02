@@ -20,7 +20,7 @@ public class MagneticData extends Data {
 
 	}
 
-	public static final String REGEX = "^ATS:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?)\\n";
+	public static final String REGEX = "^ATS:(\\d+),MX:([\\d.-]+),MY:([\\d.-]+),MZ:([\\d.-]+)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public MagneticData(Matcher m) {

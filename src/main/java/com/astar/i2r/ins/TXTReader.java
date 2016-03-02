@@ -13,7 +13,7 @@ import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.data.Translator;
 import com.astar.i2r.ins.localization.Localization;
 
-public class TXTReader implements Runnable {
+public class TXTReader extends Thread {
 
 	private BlockingQueue<Data> dataQ = null;
 	private File file = null;
@@ -58,6 +58,8 @@ public class TXTReader implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return;
 
 	}
 

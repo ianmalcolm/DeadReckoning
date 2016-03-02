@@ -28,7 +28,7 @@ public class ClientTest {
 
 		String lastMap = "";
 
-		JxMap window = new JxMap(null);
+		JxMap window = new JxMap(null, null);
 		EventQueue.invokeLater(window);
 
 		// String sensorLogFileName = "sensor/1446089995.751188.txt";

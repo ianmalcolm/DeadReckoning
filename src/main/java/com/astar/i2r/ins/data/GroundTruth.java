@@ -25,7 +25,7 @@ public class GroundTruth extends Data{
 
 	}
 
-	public static final String REGEX = "^GND:(.+?),LAT:(.+?),LON:(.+?),HD:(.+?),SPD:(.+?)\\n";
+	public static final String REGEX = "^GND:([\\d.-]+),LAT:([\\d.-]+),LON:([\\d.-]+),HD:([\\d.-]+),SPD:([\\d.-]+)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public GroundTruth(Matcher m) {

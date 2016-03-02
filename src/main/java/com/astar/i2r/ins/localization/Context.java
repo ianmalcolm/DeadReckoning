@@ -10,10 +10,10 @@ public interface Context {
 	void process(Data data);
 
 	State needStateSwitch();
+	
+	State state();
 
 	boolean DRUpdate();
-
-	boolean localize();
 
 	boolean GPSUpdate();
 

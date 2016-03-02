@@ -10,7 +10,7 @@ public class BaroData extends Data {
 	public final double altitude;
 	public final double pressure;
 
-	public static final String REGEX = "^LTS:(.+?),AR:(.+?),PV:(.+?)\\n";
+	public static final String REGEX = "^LTS:(\\d+),AR:([\\d.-]+),PV:([\\d.-]+)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public BaroData(Matcher m) {

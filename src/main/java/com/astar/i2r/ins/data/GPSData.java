@@ -24,7 +24,7 @@ public class GPSData extends Data {
 
 	}
 
-	public static final String REGEX = "^GTS:(.+?),GPA:(.+?),GPO:(.+?),GPH:(.+?),GPV:(.+?),GPS:(.+?)\\n";
+	public static final String REGEX = "^GTS:(\\d+),GPA:([\\d.-]+),GPO:([\\d.-]+),GPH:([\\d.-]+),GPV:([\\d.-]+),GPS:([\\d.-]+)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public GPSData(Matcher m) {

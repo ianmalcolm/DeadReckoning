@@ -20,7 +20,7 @@ public class CANData extends Data {
 
 	}
 
-	public static final String REGEX = "^CAN:(\\d+?),.+41 0D (..).*?\\n";
+	public static final String REGEX = "^CAN:(\\d+),.+41 0D (..)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public CANData(Matcher m) {

@@ -45,7 +45,7 @@ public class MotionData extends Data {
 	}
 
 //	public static final String REGEX = "^MTS:(.+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),MX:(.+?),MY:(.+?),MZ:(.+?),MA:(.+?),HX:(.+?),HY:(.+?),HZ:(.+?)\\n";
-	public static final String REGEX = "^MTS:(.+?),GX:(.+?),GY:(.+?),GZ:(.+?),AX:(.+?),AY:(.+?),AZ:(.+?),TR:(.+?),TP:(.+?),TY:(.+?),RR:(.+?),RP:(.+?),RY:(.+?),RX:(.+?),RY:(.+?),RZ:(.+?),";
+	public static final String REGEX = "^MTS:(\\d+),GX:([\\d.-]+),GY:([\\d.-]+),GZ:([\\d.-]+),AX:([\\d.-]+),AY:([\\d.-]+),AZ:([\\d.-]+),TR:([\\d.-]+),TP:([\\d.-]+),TY:([\\d.-]+),RR:([\\d.-]+),RP:([\\d.-]+),RY:([\\d.-]+),RX:([\\d.-]+),RY:([\\d.-]+),RZ:([\\d.-]+),";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);
 
 	public MotionData(Matcher m) {

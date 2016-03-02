@@ -34,6 +34,7 @@ public class INS {
 	// data queue
 	private BlockingQueue<Data> dataQ = null;
 	private BlockingQueue<GeoPoint> GPSQ = null;
+	private BlockingQueue<GeoPoint> DRQ = null;
 
 	private Thread dSvr = null;
 	private Thread lSvr = null;
@@ -47,9 +48,6 @@ public class INS {
 	 *            parameters.
 	 */
 	public static void main(String[] args) {
-		// args = Gst.init("Inertial Navigation", args);
-		// Increase read buffer limit
-		ReadBuffer.setMaximumBufferSize(6500000);
 
 		String mapFiles = null;
 		String vdoFile = null;
@@ -57,9 +55,9 @@ public class INS {
 		// String imuFile = "sensor/1446089995.751188.txt";
 		// String imuFile = "sensor/1446090161.558128.txt";
 
-		String imuFile = "sensor/1447040772.693506.txt";
+		 String imuFile = "sensor/1447040772.693506.txt";
 		// String imuFile = "sensor/1448511685.792016.txt";
-		// String imuFile = "sensor/1448514394.581292.txt";
+//		String imuFile = "sensor/1448514394.581292.txt";
 
 		// String imuFile = "sensor/1444893828.912658-withGT.txt";
 		// String imuFile = "sensor/1446090536.171343-withGT.txt";
@@ -101,19 +99,15 @@ public class INS {
 
 		dataQ = new LinkedBlockingQueue<Data>();
 		GPSQ = new LinkedBlockingQueue<GeoPoint>();
+		DRQ = new LinkedBlockingQueue<GeoPoint>();
 
-		TXTReader reader = new TXTReader(imu, dataQ);
-		Localization local = new Localization(dataQ, GPSQ);
-//		JxMap window = new JxMap(GPSQ);
-
-		dSvr = new Thread(reader);
-		lSvr = new Thread(local);
-//		mSvr = new Thread(window);
+		dSvr = new TXTReader(imu, dataQ);
+		lSvr = new Localization(dataQ, GPSQ, DRQ);
+		JxMap window = new JxMap(GPSQ, DRQ);
 
 		dSvr.start();
 		lSvr.start();
-//		mSvr.start();
-//		EventQueue.invokeLater(window);
+		EventQueue.invokeLater(window);
 
 	}
 

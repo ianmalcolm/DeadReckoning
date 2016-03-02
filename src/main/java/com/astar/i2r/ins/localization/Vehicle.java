@@ -24,7 +24,7 @@ class Vehicle implements Context {
 
 	private static final Logger log = Logger.getLogger(Vehicle.class.getName());
 
-	private static double GPSCALIBACCURACYTHRESHOLD = 10;
+	private static double GPSCALIBACCURACYTHRESHOLD = 5;
 	private static double GPSCALIBDISTANCETHRESHOLD = 10;
 
 	private static double GPSOKTHRESHOLD = 10;
@@ -52,15 +52,13 @@ class Vehicle implements Context {
 		state = nextState;
 
 		if (state == NavigationState.DR) {
-			step = new Step(0, 0, 0, curData.time);
-			DRUpdate();
+			step = new Step(0, 0, 0, curData != null ? curData.time : 0);
 		} else if (state == NavigationState.GPS) {
 			step = null;
-			GPSUpdate();
 		}
 
 		log.info("Switch into " + state.name() + " at "
-				+ new Date(curData.time).toString());
+				+ new Date(curData != null ? curData.time : 0).toString());
 	}
 
 	@Override
@@ -75,10 +73,19 @@ class Vehicle implements Context {
 			}
 		}
 
-		if (curPos != null) {
+		if (state == NavigationState.GPS && curData instanceof GPSData) {
 			curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
 			if (curPark != null) {
 				nextState = NavigationState.DR;
+			}
+		}
+
+		if (curPos != null && step != null) {
+			if (state == NavigationState.DR && step.getNorm() == 0) {
+				curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
+				if (curPark != null) {
+					nextState = NavigationState.DR;
+				}
 			}
 		}
 
@@ -90,37 +97,7 @@ class Vehicle implements Context {
 	}
 
 	private boolean isGPSOK(GPSData data) {
-		double accuracy = 0;
-		accuracy += data.accuracy[0] * data.accuracy[0];
-		accuracy += data.accuracy[1] * data.accuracy[1];
-		accuracy = Math.sqrt(accuracy);
-		return accuracy < GPSOKTHRESHOLD;
-	}
-
-	public String getMapName() {
-		if (curPark == null) {
-			return null;
-		} else {
-			return curPark.getMapName(getRelativeAltitude());
-		}
-	}
-
-	public double[] getMapParameter() {
-		String mapName = getMapName();
-		if (mapName != null) {
-			return curPark.getMapParameter(mapName);
-		} else {
-			return null;
-		}
-	}
-
-	public String getMapFileName() {
-		String mapName = getMapName();
-		if (mapName != null) {
-			return curPark.getMapFileName(mapName);
-		} else {
-			return null;
-		}
+		return data.accuracy[0] <= GPSOKTHRESHOLD;
 	}
 
 	@Override
@@ -145,53 +122,27 @@ class Vehicle implements Context {
 
 	private void DRUpdate(CANData data) {
 		speed = new Speed(data.vehSpdkmh / 3.6, data.time);
-
-		if (attitude == null) {
-			return;
-		}
-
-		if (step == null) {
-			step = new Step(0, 0, 0, data.time);
-		}
-
-		Vector3D vel = attitude.getVelocity(speed.speedms);
-		Velocity approxVel = new Velocity(vel, data.time);
-		step = step.increment(approxVel);
-
-		if (curPos == null) {
-			return;
-		}
-
-		if (step.getNorm() > Step.MINSTEP) {
-			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
-			curPos = curPos.add(step);
-			step = new Step(0, 0, 0, data.time);
-		}
 	}
 
 	private void DRUpdate(MotionData data) {
 
 		attitude = new Attitude(data.cardan, yawCalib, data.time);
 
-		if (speed == null) {
+		if (speed == null || curPos == null) {
 			return;
 		}
 
-		if (step == null) {
-			step = new Step(0, 0, 0, data.time);
-		}
+		assert step != null;
 
 		Vector3D vel = attitude.getVelocity(speed.speedms);
 		Velocity approxVel = new Velocity(vel, data.time);
 		step = step.increment(approxVel);
 
-		if (curPos == null) {
-			return;
-		}
-
 		if (step.getNorm() > Step.MINSTEP) {
 			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
 			curPos = curPos.add(step);
+			System.out.println("Time: " + data.time + " GPS: "
+					+ curPos.toString());
 			step = new Step(0, 0, 0, data.time);
 
 			if (curPark != null) {
@@ -234,25 +185,11 @@ class Vehicle implements Context {
 			yawCalib += gtcalib;
 		}
 		speed = new Speed(data.speedms, data.time);
-		step = null;
-	}
-
-	@Override
-	public boolean localize() {
-
-		return false;
+		step = new Step(0, 0, 0, data.time);
 	}
 
 	private boolean isGPSAccurate(GPSData data) {
-		double accuracy = 0;
-		accuracy += data.accuracy[0] * data.accuracy[0];
-		accuracy += data.accuracy[1] * data.accuracy[1];
-		accuracy = Math.sqrt(accuracy);
-		if (accuracy > GPSCALIBACCURACYTHRESHOLD) {
-			return false;
-		} else {
-			return true;
-		}
+		return data.accuracy[0] <= GPSCALIBACCURACYTHRESHOLD;
 	}
 
 	@Override
@@ -347,7 +284,6 @@ class Vehicle implements Context {
 			double gtcalib = data.heading + Math.PI - alpha;
 			yawCalib += gtcalib;
 		}
-		step = null;
 	}
 
 	@Override
@@ -404,6 +340,37 @@ class Vehicle implements Context {
 	public void process(Data data) {
 		curData = data;
 		state.process(this);
+	}
+
+	public String getMapName() {
+		if (curPark == null) {
+			return null;
+		} else {
+			return curPark.getMapName(getRelativeAltitude());
+		}
+	}
+
+	public double[] getMapParameter() {
+		String mapName = getMapName();
+		if (mapName != null) {
+			return curPark.getMapParameter(mapName);
+		} else {
+			return null;
+		}
+	}
+
+	public String getMapFileName() {
+		String mapName = getMapName();
+		if (mapName != null) {
+			return curPark.getMapFileName(mapName);
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public State state() {
+		return state;
 	}
 
 }
