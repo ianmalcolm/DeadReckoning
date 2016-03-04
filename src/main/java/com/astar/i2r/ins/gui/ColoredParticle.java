@@ -4,7 +4,6 @@ import java.awt.Color;
 
 import org.jxmapviewer.viewer.GeoPosition;
 
-import com.graphhopper.util.shapes.GHPoint;
 import com.astar.i2r.ins.gui.Colored;
 import com.astar.i2r.ins.gui.ColoredWeightedWaypoint;
 import com.astar.i2r.ins.gui.Weighted;
@@ -18,16 +17,6 @@ public class ColoredParticle implements ColoredWeightedWaypoint {
 
 	public static final double DEFAULTWEIGHT = 1.0;
 	public static final Color DEFAULTCOLOR = Color.RED;
-
-	public ColoredParticle(GHPoint p, double w, Color c) {
-		pos = new GeoPosition(p.lat, p.lon);
-		weight = w;
-		color = c;
-	}
-
-	public ColoredParticle(GHPoint p) {
-		this(p, DEFAULTWEIGHT, DEFAULTCOLOR);
-	}
 
 	public ColoredParticle(GeoPoint p) {
 		this(p.lat, p.lon, DEFAULTWEIGHT, DEFAULTCOLOR);

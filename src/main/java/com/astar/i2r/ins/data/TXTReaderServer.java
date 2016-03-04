@@ -1,4 +1,4 @@
-package com.astar.i2r.ins;
+package com.astar.i2r.ins.data;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,18 +9,15 @@ import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.astar.i2r.ins.data.Data;
-import com.astar.i2r.ins.data.Translator;
-import com.astar.i2r.ins.localization.Localization;
-
-public class TXTReader extends Thread {
+public class TXTReaderServer extends Thread {
 
 	private BlockingQueue<Data> dataQ = null;
 	private File file = null;
-	private static final Logger log = Logger.getLogger(TXTReader.class
+	private static final Logger log = Logger.getLogger(TXTReaderServer.class
 			.getName());
+	public static int DELAY = 0;
 
-	public TXTReader(File _file, BlockingQueue<Data> _dataQ) {
+	public TXTReaderServer(File _file, BlockingQueue<Data> _dataQ) {
 		file = _file;
 		dataQ = _dataQ;
 	}
@@ -46,8 +43,11 @@ public class TXTReader extends Thread {
 					continue;
 				}
 				dataQ.add(data);
+				if (DELAY > 0) {
+					Thread.sleep(DELAY);
+				}
 			}
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -58,7 +58,7 @@ public class TXTReader extends Thread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return;
 
 	}

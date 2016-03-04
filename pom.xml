@@ -27,10 +27,6 @@
 			<name>Open Source Geospatial Foundation Repository</name>
 			<url>http://download.osgeo.org/webdav/geotools/</url>
 		</repository>
-		<!-- <repository> -->
-		<!-- <id>xuggle repo</id> -->
-		<!-- <url>http://xuggle.googlecode.com/svn/trunk/repo/share/java/</url> -->
-		<!-- </repository> -->
 	</repositories>
 
 	<dependencies>
@@ -39,31 +35,6 @@
 			<artifactId>junit</artifactId>
 			<version>3.8.1</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mapsforge</groupId>
-			<artifactId>mapsforge-core</artifactId>
-			<version>0.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mapsforge</groupId>
-			<artifactId>mapsforge-map-reader</artifactId>
-			<version>0.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mapsforge</groupId>
-			<artifactId>mapsforge-map</artifactId>
-			<version>0.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mapsforge</groupId>
-			<artifactId>mapsforge-map-awt</artifactId>
-			<version>0.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>com.graphhopper</groupId>
-			<artifactId>map-matching</artifactId>
-			<version>0.5.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -90,25 +61,10 @@
 			<artifactId>gt-referencing</artifactId>
 			<version>14.0</version>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>org.geotools</groupId> -->
-		<!-- <artifactId>gt-geometry</artifactId> -->
-		<!-- <version>14.0</version> -->
-		<!-- </dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.4</version>
-		</dependency>
-		<dependency>
-			<groupId>com.graphhopper</groupId>
-			<artifactId>graphhopper</artifactId>
-			<version>0.5.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.graphhopper</groupId>
-			<artifactId>graphhopper-tools</artifactId>
-			<version>0.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -120,11 +76,10 @@
 			<artifactId>jxmapviewer2</artifactId>
 			<version>2.1</version>
 		</dependency>
-
 		<dependency>
-			<groupId>com.google.code.geocoder-java</groupId>
-			<artifactId>geocoder-java</artifactId>
-			<version>0.16</version>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jgrapht</groupId>
@@ -136,13 +91,6 @@
 			<artifactId>jgrapht-ext</artifactId>
 			<version>0.9.1</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.monkeysintown</groupId>
-			<artifactId>jgraphx</artifactId>
-			<version>3.3.1.1</version>
-		</dependency>
-
-
 	</dependencies>
 
 

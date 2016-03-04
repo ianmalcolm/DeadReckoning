@@ -15,7 +15,7 @@ public class DataTest {
 	@Test
 	public void readerTest() {
 		File file = new File("map/1444893421.386011.xml");
-		Reader reader = new Reader(file);
+		XMLReader reader = new XMLReader(file);
 		for (int i = 0; i < 10; i++) {
 			Data data = reader.next();
 			if (MotionData.class.isInstance(data)) {

@@ -6,8 +6,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -16,7 +14,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.xpath.XPathExpression;
 import org.jdom2.xpath.XPathFactory;
 
-public class Reader implements Iterable<Data>, Iterator<Data> {
+public class XMLReader implements Iterable<Data>, Iterator<Data> {
 
 	public static final HashMap<String, Class<?>> SENSORDATATYPE;
 	static {
@@ -29,12 +27,12 @@ public class Reader implements Iterable<Data>, Iterator<Data> {
 	private Document doc = null;
 	private Iterator<Element> it = null;
 
-	public Reader(File file, String name) {
+	public XMLReader(File file, String name) {
 		SAXBuilder builder = new SAXBuilder();
 		try {
 
 			doc = (Document) builder.build(file);
-			Element root = doc.getRootElement();
+			doc.getRootElement();
 
 			// use the default implementation
 			XPathFactory xFactory = XPathFactory.instance();
@@ -54,12 +52,12 @@ public class Reader implements Iterable<Data>, Iterator<Data> {
 		}
 	}
 
-	public Reader(File file) {
+	public XMLReader(File file) {
 		SAXBuilder builder = new SAXBuilder();
 		try {
 
 			doc = (Document) builder.build(file);
-			Element root = doc.getRootElement();
+			doc.getRootElement();
 
 			// use the default implementation
 			XPathFactory xFactory = XPathFactory.instance();

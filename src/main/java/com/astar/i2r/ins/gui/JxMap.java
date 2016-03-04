@@ -56,19 +56,15 @@ public class JxMap extends JFrame implements Runnable {
 	private static final long serialVersionUID = 1L;
 	private final JXMapKit jXMapKit = new JXMapKit();
 	private final static String imagePath = "map/";
-	private final BlockingQueue<GeoPoint> GPSQ;
-	private final BlockingQueue<GeoPoint> DRQ;
+	private final BlockingQueue<ColoredWeightedWaypoint> GPSQ;
 	private String curImageStr = null;
 	private MyLabel picLabel = new MyLabel();
 	private WaypointPainter<ColoredWeightedWaypoint> waypointPainter = null;
 	private Set<ColoredWeightedWaypoint> waypoints = new HashSet<ColoredWeightedWaypoint>();
 
-	private GeoPoint lastWP = null;
-
-	public JxMap(BlockingQueue<GeoPoint> _GPSQ, BlockingQueue<GeoPoint> _DRQ) {
+	public JxMap(BlockingQueue<ColoredWeightedWaypoint> _GPSQ) {
 
 		GPSQ = _GPSQ;
-		DRQ = _DRQ;
 
 		TileFactoryInfo info = new OSMTileFactoryInfo();
 		DefaultTileFactory tileFactory = new DefaultTileFactory(info);
@@ -138,27 +134,34 @@ public class JxMap extends JFrame implements Runnable {
 		setVisible(true);
 
 		SwingWorker GPSworker = new SwingWorker<Void, ColoredWeightedWaypoint>() {
+
+			GeoPoint lastGPS = null;
+
 			@Override
 			public Void doInBackground() {
-				GeoPoint coordinate = null;
+				ColoredWeightedWaypoint waypoint = null;
 
 				while (true) {
 					try {
-						coordinate = GPSQ.take();
+						waypoint = GPSQ.take();
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					if (waypoint != null) {
+						GeoPosition curPos = waypoint.getPosition();
+						GeoPoint curCoor = new GeoPoint(curPos.getLatitude(),
+								curPos.getLongitude(), 0, 0);
+						if (lastGPS != null) {
 
-					if (coordinate != null) {
-						if (lastWP == null) {
-							lastWP = coordinate;
-							publish(new ColoredParticle(coordinate));
-						} else {
-							if (GeoPoint.distance(lastWP, coordinate).getNorm() > Step.MINSTEP * 10) {
-								publish(new ColoredParticle(coordinate));
-								lastWP = coordinate;
+							double dist = GeoPoint.distance(curCoor, lastGPS)
+									.getNorm();
+							if (dist >= Step.MINSTEP) {
+								publish(waypoint);
+								lastGPS = curCoor;
 							}
+						} else {
+							lastGPS = curCoor;
 						}
 					}
 				}
@@ -168,59 +171,14 @@ public class JxMap extends JFrame implements Runnable {
 			protected void process(List<ColoredWeightedWaypoint> wps) {
 				for (ColoredWeightedWaypoint wp : wps) {
 					waypoints.add(wp);
-					System.out.println(waypoints.size() + "\t"
-							+ wp.getPosition().toString());
-				}
-				setWaypoints(waypoints);
-			}
-		};
-
-		SwingWorker DRworker = new SwingWorker<Void, ColoredWeightedWaypoint>() {
-			@Override
-			public Void doInBackground() {
-				GeoPoint coordinate = null;
-
-				while (true) {
-					try {
-						coordinate = DRQ.take();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					if (coordinate != null) {
-						if (lastWP == null) {
-							lastWP = coordinate;
-							publish(new ColoredParticle(coordinate.lat,
-									coordinate.lon,
-									ColoredParticle.DEFAULTWEIGHT, Color.BLUE));
-						} else {
-							if (GeoPoint.distance(lastWP, coordinate).getNorm() > Step.MINSTEP * 10) {
-								publish(new ColoredParticle(coordinate.lat,
-										coordinate.lon,
-										ColoredParticle.DEFAULTWEIGHT,
-										Color.BLUE));
-								lastWP = coordinate;
-							}
-						}
-					}
-				}
-			}
-
-			@Override
-			protected void process(List<ColoredWeightedWaypoint> wps) {
-				for (ColoredWeightedWaypoint wp : wps) {
-					waypoints.add(wp);
-					System.out.println(waypoints.size() + "\t"
-							+ wp.getPosition().toString());
+					// System.out.println(waypoints.size() + "\t"
+					// + wp.getPosition().toString());
 				}
 				setWaypoints(waypoints);
 			}
 		};
 
 		GPSworker.execute();
-		DRworker.execute();
-
 	}
 
 	public void setWaypoints(Set<ColoredWeightedWaypoint> _waypoints) {

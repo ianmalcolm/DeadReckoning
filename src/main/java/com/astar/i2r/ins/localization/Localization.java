@@ -1,10 +1,13 @@
 package com.astar.i2r.ins.localization;
 
+import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 
 import com.astar.i2r.ins.data.Data;
+import com.astar.i2r.ins.gui.ColoredParticle;
+import com.astar.i2r.ins.gui.ColoredWeightedWaypoint;
 import com.astar.i2r.ins.motion.GeoPoint;
 
 public class Localization extends Thread {
@@ -12,17 +15,18 @@ public class Localization extends Thread {
 	private static final Logger log = Logger.getLogger(Localization.class
 			.getName());
 
+	public static boolean BOUNDARYFLAG = false;
+	public static boolean CORRECTIONFLAG = false;
+	public static boolean GROUNDTRUTHFLAG = false;
+
 	private BlockingQueue<Data> dataQ = null;
-	private BlockingQueue<GeoPoint> GPSQ = null;
-	private BlockingQueue<GeoPoint> DRQ = null;
+	private BlockingQueue<ColoredWeightedWaypoint> GPSQ = null;
 	private Context car = new Vehicle();
 
 	public Localization(BlockingQueue<Data> _dataQ,
-			BlockingQueue<GeoPoint> _GPSQ, BlockingQueue<GeoPoint> _DRQ) {
+			BlockingQueue<ColoredWeightedWaypoint> _GPSQ) {
 		dataQ = _dataQ;
 		GPSQ = _GPSQ;
-		DRQ = _DRQ;
-
 		car.state(NavigationState.DR);
 	}
 
@@ -45,10 +49,13 @@ public class Localization extends Thread {
 
 			GeoPoint coordinate = car.getGPS();
 			if (coordinate != null) {
-				if (car.state() == NavigationState.GPS)
-					GPSQ.add(car.getGPS());
-				if (car.state() == NavigationState.DR)
-					DRQ.add(car.getGPS());
+				if (car.state() == NavigationState.GPS) {
+					GPSQ.add(new ColoredParticle(coordinate.lat,
+							coordinate.lon, 0.5, Color.RED));
+				} else if (car.state() == NavigationState.DR) {
+					GPSQ.add(new ColoredParticle(coordinate.lat,
+							coordinate.lon, 0.5, Color.BLUE));
+				}
 			}
 
 		}

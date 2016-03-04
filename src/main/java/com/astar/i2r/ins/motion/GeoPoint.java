@@ -8,9 +8,6 @@ import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.util.FastMath;
 import org.geotools.referencing.GeodeticCalculator;
-import org.mapsforge.core.model.LatLong;
-
-import com.graphhopper.util.GPXEntry;
 
 public class GeoPoint {
 
@@ -30,10 +27,6 @@ public class GeoPoint {
 	public GeoPoint(double _lat, double _lon, double _ele, Date _time) {
 		this(_lat, _lon, _ele, _time.getTime());
 
-	}
-
-	public GeoPoint(LatLong _latlong, long _time) {
-		this(_latlong.latitude, _latlong.longitude, 0, _time);
 	}
 
 	public GeoPoint(double _lat, double _lon, double _ele) {
@@ -85,10 +78,6 @@ public class GeoPoint {
 
 		// in meters
 		return trip;
-	}
-
-	public GPXEntry toGPXEntry() {
-		return new GPXEntry(lat, lon, ele, time.getTime());
 	}
 
 	public GeoPoint add(Step step) {

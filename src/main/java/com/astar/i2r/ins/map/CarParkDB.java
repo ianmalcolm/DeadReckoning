@@ -1,6 +1,8 @@
 package com.astar.i2r.ins.map;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -8,39 +10,27 @@ public class CarParkDB {
 
 	private static List<CarPark> carparks = new LinkedList<CarPark>();
 
-	static {
-
-		String filename = null;
-		CarPark cp = null;
-		
-		filename = "map/Fusionopolis.osm";
-		cp = new CarPark(filename);
-		carparks.add(cp);
-
-		filename = "map/Blk88A.osm";
-		cp = new CarPark(filename);
-		carparks.add(cp);
-	}
-
-	public static File getMap(String name) {
-		File f = new File("map/" + name);
-		if (f.exists() && !f.isDirectory()) {
-			return f;
-		} else {
-			return null;
-		}
-	}
-
-	public static double[] getMapParameter(String name) {
-
-		for (CarPark park : carparks) {
-			for (Storey s : park) {
-				if (s.image.compareTo(name) == 0) {
-					return s.getMapParameter();
+	public static void loadMap(String folder) {
+		File dir = new File(folder);
+		File[] directoryListing = dir.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return name.toLowerCase().endsWith(".osm");
+			}
+		});
+		if (directoryListing != null) {
+			for (File child : directoryListing) {
+				CarPark cp = null;
+				try {
+					cp = new CarPark(child.getCanonicalPath());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (cp != null) {
+					carparks.add(cp);
 				}
 			}
 		}
-		return null;
 	}
 
 	public static CarPark getCarPark(double lat, double lon) {

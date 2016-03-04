@@ -24,16 +24,18 @@ class Vehicle implements Context {
 
 	private static final Logger log = Logger.getLogger(Vehicle.class.getName());
 
-	private static double GPSCALIBACCURACYTHRESHOLD = 5;
+	private static double GPSCALIBACCURACYTHRESHOLD = 10;
 	private static double GPSCALIBDISTANCETHRESHOLD = 10;
 
-	private static double GPSOKTHRESHOLD = 10;
+	private static double GPSOKTHRESHOLD = 15;
+
+	private GPSData lastGPSData = null;
 
 	private Attitude attitude = null;
 	private Speed speed = null;
+
 	private Data curData = null;
 	private GeoPoint curPos = null;
-	private GeoPoint lastAccGPS = null;
 	private Vector3D GPSCalibVector = null;
 	// private double yawCalib = Double.NaN;
 	// private double yawCalib = 2.32;
@@ -65,26 +67,29 @@ class Vehicle implements Context {
 	public State needStateSwitch() {
 		State nextState = null;
 
-		if (curData instanceof GPSData) {
-			if (isGPSOK(((GPSData) curData))) {
-				nextState = NavigationState.GPS;
-			} else {
+		if (state == NavigationState.GPS && curData instanceof GPSData
+				&& curPos != null) {
+			if (!isGPSOK(((GPSData) curData))) {
 				nextState = NavigationState.DR;
-			}
-		}
-
-		if (state == NavigationState.GPS && curData instanceof GPSData) {
-			curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
-			if (curPark != null) {
-				nextState = NavigationState.DR;
-			}
-		}
-
-		if (curPos != null && step != null) {
-			if (state == NavigationState.DR && step.getNorm() == 0) {
+			} else if (Localization.BOUNDARYFLAG) {
 				curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
 				if (curPark != null) {
 					nextState = NavigationState.DR;
+				}
+			}
+		}
+
+		if (state == NavigationState.DR) {
+			if (curPos == null) {
+				nextState = NavigationState.GPS;
+			} else if (curData instanceof GPSData) {
+				if (isGPSOK(((GPSData) curData)) && !Localization.BOUNDARYFLAG) {
+					nextState = NavigationState.GPS;
+				} else if (isGPSOK(((GPSData) curData)) && Localization.BOUNDARYFLAG) {
+					curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
+					if (curPark == null) {
+						nextState = NavigationState.GPS;
+					}
 				}
 			}
 		}
@@ -97,7 +102,10 @@ class Vehicle implements Context {
 	}
 
 	private boolean isGPSOK(GPSData data) {
-		return data.accuracy[0] <= GPSOKTHRESHOLD;
+		double acc = data.accuracy[0] * data.accuracy[0] + data.accuracy[1]
+				+ data.accuracy[1];
+		acc = Math.sqrt(acc);
+		return acc <= GPSOKTHRESHOLD;
 	}
 
 	@Override
@@ -145,7 +153,7 @@ class Vehicle implements Context {
 					+ curPos.toString());
 			step = new Step(0, 0, 0, data.time);
 
-			if (curPark != null) {
+			if (curPark != null && Localization.CORRECTIONFLAG) {
 				double correctHeading = curPark.getCorrectHeading(curPos.lat,
 						curPos.lon);
 				if (!Double.isNaN(correctHeading)) {
@@ -174,22 +182,28 @@ class Vehicle implements Context {
 
 	private void DRUpdate(GroundTruth data) {
 
-		double e = 0;
-		if (curPos != null) {
-			e = curPos.ele;
+		if (Localization.GROUNDTRUTHFLAG) {
+			double e = 0;
+			if (curPos != null) {
+				e = curPos.ele;
+			}
+			curPos = new GeoPoint(data.lat, data.lon, e, data.time);
+			if (attitude != null) {
+				double alpha = attitude.getVelocity(1).getAlpha() + Math.PI / 2;
+				double gtcalib = data.heading + Math.PI - alpha;
+				yawCalib += gtcalib;
+			}
+			speed = new Speed(data.speedms, data.time);
+			step = new Step(0, 0, 0, data.time);
 		}
-		curPos = new GeoPoint(data.lat, data.lon, e, data.time);
-		if (attitude != null) {
-			double alpha = attitude.getVelocity(1).getAlpha() + Math.PI / 2;
-			double gtcalib = data.heading + Math.PI - alpha;
-			yawCalib += gtcalib;
-		}
-		speed = new Speed(data.speedms, data.time);
-		step = new Step(0, 0, 0, data.time);
 	}
 
 	private boolean isGPSAccurate(GPSData data) {
-		return data.accuracy[0] <= GPSCALIBACCURACYTHRESHOLD;
+		double acc = data.accuracy[0] * data.accuracy[0] + data.accuracy[1]
+				+ data.accuracy[1];
+		acc = Math.sqrt(acc);
+
+		return acc <= GPSCALIBACCURACYTHRESHOLD;
 	}
 
 	@Override
@@ -245,26 +259,23 @@ class Vehicle implements Context {
 		curPos = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
 		speed = new Speed(data.speedms, data.time);
 
-		// generator calibration factor
-		if (isGPSAccurate(data)) {
+		if (lastGPSData == null) {
+			lastGPSData = data;
+		} else if (isGPSAccurate(data) && isGPSAccurate(lastGPSData)
+				&& lastGPSData != data) {
+			// generator calibration factor
 
-			GeoPoint curGPS = new GeoPoint(data.gps[0], data.gps[1], 0,
-					data.time);
-
-			if (lastAccGPS != null) {
-				Vector3D v = GeoPoint.distance(lastAccGPS, curGPS);
-				if (v.getNorm() > GPSCALIBDISTANCETHRESHOLD) {
-					GPSCalibVector = v;
-				} else {
-					GPSCalibVector = null;
-				}
+			GeoPoint lastGPS = new GeoPoint(lastGPSData.gps[0],
+					lastGPSData.gps[1], 0, lastGPSData.time);
+			Vector3D v = GeoPoint.distance(lastGPS, curPos);
+			if (v.getNorm() > GPSCALIBDISTANCETHRESHOLD) {
+				GPSCalibVector = v;
 			} else {
 				GPSCalibVector = null;
 			}
-			lastAccGPS = curGPS;
+			lastGPSData = data;
 		} else {
 			GPSCalibVector = null;
-			lastAccGPS = null;
 		}
 
 	}
@@ -274,15 +285,18 @@ class Vehicle implements Context {
 	}
 
 	private void GPSUpdate(GroundTruth data) {
-		double e = 0;
-		if (curPos != null) {
-			e = curPos.ele;
-		}
-		curPos = new GeoPoint(data.lat, data.lon, e, data.time);
-		if (attitude != null) {
-			double alpha = attitude.getVelocity(1).getAlpha() + Math.PI / 2;
-			double gtcalib = data.heading + Math.PI - alpha;
-			yawCalib += gtcalib;
+
+		if (Localization.GROUNDTRUTHFLAG) {
+			double e = 0;
+			if (curPos != null) {
+				e = curPos.ele;
+			}
+			curPos = new GeoPoint(data.lat, data.lon, e, data.time);
+			if (attitude != null) {
+				double alpha = attitude.getVelocity(1).getAlpha() + Math.PI / 2;
+				double gtcalib = data.heading + Math.PI - alpha;
+				yawCalib += gtcalib;
+			}
 		}
 	}
 
@@ -319,7 +333,6 @@ class Vehicle implements Context {
 		double gpsyaw = v.getAlpha() + Math.PI / 2;
 		double newCalib = (gpsyaw - attyaw) % (Math.PI * 2);
 		return newCalib;
-
 	}
 
 	@Override
