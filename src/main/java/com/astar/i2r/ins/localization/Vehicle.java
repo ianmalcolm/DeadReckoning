@@ -85,7 +85,8 @@ class Vehicle implements Context {
 			} else if (curData instanceof GPSData) {
 				if (isGPSOK(((GPSData) curData)) && !Localization.BOUNDARYFLAG) {
 					nextState = NavigationState.GPS;
-				} else if (isGPSOK(((GPSData) curData)) && Localization.BOUNDARYFLAG) {
+				} else if (isGPSOK(((GPSData) curData))
+						&& Localization.BOUNDARYFLAG) {
 					curPark = CarParkDB.getCarPark(curPos.lat, curPos.lon);
 					if (curPark == null) {
 						nextState = NavigationState.GPS;
@@ -256,7 +257,13 @@ class Vehicle implements Context {
 
 	private void GPSUpdate(GPSData data) {
 
-		curPos = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
+		GeoPoint gp = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
+		GeoPoint snappedGP = Localization.findClosestSnappedPoint(gp);
+		if (snappedGP != null) {
+			curPos = snappedGP;
+			data = new GPSData(curPos.lat, curPos.lon, data.accuracy[0],
+					data.accuracy[1], data.speedms, data.time);
+		}
 		speed = new Speed(data.speedms, data.time);
 
 		if (lastGPSData == null) {

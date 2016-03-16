@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import com.astar.i2r.ins.data.Data;
 import com.astar.i2r.ins.gui.ColoredParticle;
 import com.astar.i2r.ins.gui.ColoredWeightedWaypoint;
+import com.astar.i2r.ins.map.Map;
 import com.astar.i2r.ins.motion.GeoPoint;
 
 public class Localization extends Thread {
@@ -22,11 +23,13 @@ public class Localization extends Thread {
 	private BlockingQueue<Data> dataQ = null;
 	private BlockingQueue<ColoredWeightedWaypoint> GPSQ = null;
 	private Context car = new Vehicle();
+	private static Map map = null;
 
 	public Localization(BlockingQueue<Data> _dataQ,
-			BlockingQueue<ColoredWeightedWaypoint> _GPSQ) {
+			BlockingQueue<ColoredWeightedWaypoint> _GPSQ, Map _map) {
 		dataQ = _dataQ;
 		GPSQ = _GPSQ;
+		map = _map;
 		car.state(NavigationState.DR);
 	}
 
@@ -59,5 +62,10 @@ public class Localization extends Thread {
 			}
 
 		}
+	}
+
+	public static GeoPoint findClosestSnappedPoint(GeoPoint gp) {
+		GeoPoint snappedGP = map.findClosestSnappedPoint(gp);
+		return snappedGP;
 	}
 }

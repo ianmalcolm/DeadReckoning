@@ -23,6 +23,15 @@ public class GPSData extends Data {
 		speedms = Double.parseDouble(ele.getChild("Spd").getText());
 
 	}
+	
+	public GPSData(double lat, double lon, double horacc, double veracc, double spd,long time){
+		super(time);
+		gps[0] = lat;
+		gps[1] = lon;
+		accuracy[0] = horacc;
+		accuracy[1] = veracc;
+		speedms = spd;
+	}
 
 	public static final String REGEX = "^GTS:(\\d+),GPA:([\\d.-]+),GPO:([\\d.-]+),GPH:([\\d.-]+),GPV:([\\d.-]+),GPS:([\\d.-]+)";
 	public static final Pattern PATTERN = Pattern.compile(REGEX);

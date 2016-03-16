@@ -91,6 +91,21 @@
 			<artifactId>jgrapht-ext</artifactId>
 			<version>0.9.1</version>
 		</dependency>
+				<dependency>
+			<groupId>com.graphhopper</groupId>
+			<artifactId>graphhopper</artifactId>
+			<version>0.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphhopper</groupId>
+			<artifactId>graphhopper-tools</artifactId>
+			<version>0.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.graphhopper</groupId>
+			<artifactId>map-matching</artifactId>
+			<version>0.5.0.0</version>
+		</dependency>
 	</dependencies>
 
 
