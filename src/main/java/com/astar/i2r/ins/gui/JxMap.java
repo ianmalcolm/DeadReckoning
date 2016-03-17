@@ -133,7 +133,7 @@ public class JxMap extends JFrame implements Runnable {
 
 		setVisible(true);
 
-		SwingWorker GPSworker = new SwingWorker<Void, ColoredWeightedWaypoint>() {
+		SwingWorker<Void, ColoredWeightedWaypoint> GPSworker = new SwingWorker<Void, ColoredWeightedWaypoint>() {
 
 			GeoPoint lastGPS = null;
 
@@ -171,8 +171,6 @@ public class JxMap extends JFrame implements Runnable {
 			protected void process(List<ColoredWeightedWaypoint> wps) {
 				for (ColoredWeightedWaypoint wp : wps) {
 					waypoints.add(wp);
-					// System.out.println(waypoints.size() + "\t"
-					// + wp.getPosition().toString());
 				}
 				setWaypoints(waypoints);
 			}

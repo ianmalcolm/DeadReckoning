@@ -150,8 +150,6 @@ class Vehicle implements Context {
 		if (step.getNorm() > Step.MINSTEP) {
 			log.trace("Step: " + step.toString() + " GPS: " + curPos.toString());
 			curPos = curPos.add(step);
-			System.out.println("Time: " + data.time + " GPS: "
-					+ curPos.toString());
 			step = new Step(0, 0, 0, data.time);
 
 			if (curPark != null && Localization.CORRECTIONFLAG) {
@@ -257,13 +255,18 @@ class Vehicle implements Context {
 
 	private void GPSUpdate(GPSData data) {
 
-		GeoPoint gp = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
-		GeoPoint snappedGP = Localization.findClosestSnappedPoint(gp);
-		if (snappedGP != null) {
-			curPos = snappedGP;
-			data = new GPSData(curPos.lat, curPos.lon, data.accuracy[0],
-					data.accuracy[1], data.speedms, data.time);
+		if (Localization.SNAPPEDGPS) {
+			GeoPoint gp = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
+			GeoPoint snappedGP = Localization.findClosestSnappedPoint(gp);
+			if (snappedGP != null) {
+				curPos = snappedGP;
+				data = new GPSData(curPos.lat, curPos.lon, data.accuracy[0],
+						data.accuracy[1], data.speedms, data.time);
+			}
+		} else {
+			curPos = new GeoPoint(data.gps[0], data.gps[1], 0, data.time);
 		}
+
 		speed = new Speed(data.speedms, data.time);
 
 		if (lastGPSData == null) {

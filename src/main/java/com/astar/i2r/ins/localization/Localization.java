@@ -10,6 +10,7 @@ import com.astar.i2r.ins.gui.ColoredParticle;
 import com.astar.i2r.ins.gui.ColoredWeightedWaypoint;
 import com.astar.i2r.ins.map.Map;
 import com.astar.i2r.ins.motion.GeoPoint;
+import com.astar.i2r.ins.motion.Step;
 
 public class Localization extends Thread {
 
@@ -19,6 +20,8 @@ public class Localization extends Thread {
 	public static boolean BOUNDARYFLAG = false;
 	public static boolean CORRECTIONFLAG = false;
 	public static boolean GROUNDTRUTHFLAG = false;
+	public static boolean SNAPPEDGPS = false;
+	public static boolean VERBOSE = false;
 
 	private BlockingQueue<Data> dataQ = null;
 	private BlockingQueue<ColoredWeightedWaypoint> GPSQ = null;
@@ -35,6 +38,7 @@ public class Localization extends Thread {
 
 	@Override
 	public void run() {
+		GeoPoint lastGPS = null;
 		while (true) {
 
 			Data data = null;
@@ -59,13 +63,35 @@ public class Localization extends Thread {
 					GPSQ.add(new ColoredParticle(coordinate.lat,
 							coordinate.lon, 0.5, Color.BLUE));
 				}
+				if (VERBOSE) {
+					if (lastGPS == null) {
+						lastGPS = coordinate;
+						System.out.println("Time: " + coordinate.time.getTime()
+								+ "\tGPS coordinate: " + coordinate.toString());
+					} else {
+						double dist = GeoPoint.distance(lastGPS, coordinate)
+								.getNorm();
+						if (dist > Step.MINSTEP) {
+							lastGPS = coordinate;
+							System.out.println("Time: "
+									+ coordinate.time.getTime()
+									+ "\tGPS coordinate: "
+									+ coordinate.toString());
+						}
+					}
+
+				}
 			}
 
 		}
 	}
 
 	public static GeoPoint findClosestSnappedPoint(GeoPoint gp) {
-		GeoPoint snappedGP = map.findClosestSnappedPoint(gp);
-		return snappedGP;
+		if (Localization.SNAPPEDGPS) {
+			GeoPoint snappedGP = map.findClosestSnappedPoint(gp);
+			return snappedGP;
+		} else {
+			return null;
+		}
 	}
 }

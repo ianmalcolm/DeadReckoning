@@ -52,9 +52,9 @@ public class INS {
 		// String imuFile = "sensor/1446089995.751188.txt";
 		// String imuFile = "sensor/1446090161.558128.txt";
 
-//		String imuFile = "sensor/1447040772.693506.txt";
+		// String imuFile = "sensor/1447040772.693506.txt";
 		// String imuFile = "sensor/1448511685.792016.txt";
-		 String imuFile = "sensor/1448514394.581292.txt";
+		String imuFile = "sensor/1448514394.581292.txt";
 
 		// String imuFile = "sensor/1444893828.912658-withGT.txt";
 		// String imuFile = "sensor/1446090536.171343-withGT.txt";
@@ -73,6 +73,10 @@ public class INS {
 		options.addOption("g", "groundtruth", false,
 				"Correct the localization status with groundtruth"
 						+ " in data set.");
+		options.addOption("s", "snap", false,
+				"Snap the GPS coordinate to the road of the world map.");
+		options.addOption("v", "verbose", false,
+				"Print out the GPS coordinates drawed on the map.");
 		options.addOption("d", "delay", true,
 				"Add delay (ms) to slow the play of the track. 0 for no delay.");
 		options.addOption("w", "worldmap", true,
@@ -103,6 +107,17 @@ public class INS {
 			} else {
 				Localization.GROUNDTRUTHFLAG = false;
 			}
+			if (cmd.hasOption("v")) {
+				Localization.VERBOSE = true;
+			} else {
+				Localization.VERBOSE = false;
+			}
+			if (cmd.hasOption("s")) {
+				Localization.SNAPPEDGPS = true;
+			} else {
+				Localization.SNAPPEDGPS = false;
+			}
+
 			if (cmd.hasOption("m")) {
 				carparkmapdir = cmd.getOptionValue("m");
 			}
@@ -126,8 +141,11 @@ public class INS {
 	}
 
 	public INS(File imu, String _worldmap) {
-
-		GHMap ghmap = new GHMap(_worldmap);
+		
+		GHMap ghmap = null;
+		if (Localization.SNAPPEDGPS) {
+			ghmap = new GHMap(_worldmap);
+		}
 
 		dataQ = new LinkedBlockingQueue<Data>();
 		GPSQ = new LinkedBlockingQueue<ColoredWeightedWaypoint>();
